@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+	 "strict": true,
+	 "target": "es6",
+    "sourceMap": true,
+    "outDir": "dist",
+    "rootDir": "src"
+  }
+}

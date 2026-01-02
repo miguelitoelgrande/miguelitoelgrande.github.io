@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<title></title>
+	</head>
+
+	<body>
+
+		Status: <span id="status"></span>
+		<br /><br />
+
+		<script type="module" src="./BluetoothLedStrip.js"></script>
+
+		<script type="module">
+
+			import { BluetoothLedStrip } from './BluetoothLedStrip.js';
+
+			var device;
+
+			// connect callback
+			function onConnect(device)
+			{
+				document.getElementById('status').innerHTML = 'Device ' + device.name + ' connected';
+			}
+
+			// disconnect callback
+			function onDisconnect(device)
+			{
+				document.getElementById('status').innerHTML = 'Device ' + device.name + ' disconnected';
+			}
+
+			// error callback
+			function onError(exception)
+			{
+				document.getElementById('status').innerHTML = 'Error ' + exception + ' occured';
+			}
+
+			// 'Connect' button
+			window.connect = function()
+			{
+				device = new BluetoothLedStrip.Device();
+				device.connect(onConnect, onDisconnect, onError);
+			}
+
+			// 'setRGB' button
+			window.setRGB = function()
+			{
+				const red = document.getElementById('red').value;
+				const green = document.getElementById('green').value;
+				const blue = document.getElementById('blue').value;
+				device.setRGB(red, green, blue);
+			}
+
+			// 'setBrightness' button
+			window.setBrightness = function()
+			{
+				const brightness = document.getElementById('brightness').value;
+				device.setBrightness(brightness);
+			}
+
+			// 'setSwitch' button
+			window.setSwitch = function()
+			{
+				const value = document.getElementById('switch').value;
+				device.setSwitch(value);
+			}
+
+			// 'setMode' button
+			window.setMode = function()
+			{
+				const mode = document.getElementById('mode').value;
+				device.setMode(mode);
+			}
+
+			// 'setSpeed' button
+			window.setSpeed = function()
+			{
+				const speed = document.getElementById('speed').value;
+				device.setSpeed(speed);
+			}
+
+		</script>
+
+		<button onclick="connect();">Connect</button>
+		<br /><br />
+		R <input type="text" id="red" size="3" value="255">
+		G <input type="text" id="green" size="3" value="0">
+		B <input type="text" id="blue" size="3" value="0">
+		<button onclick="setRGB();">setRGB</button>
+		<br /><br />
+		Brightness <input type="text" id="brightness" size="3" value="0">
+		<button onclick="setBrightness();">setBrightness</button>
+		<br /><br />
+		Switch <input type="text" id="switch" size="3" value="0">
+		<button onclick="setSwitch();">setSwitch</button>
+		<br /><br />
+		Mode <input type="text" id="mode" size="3" value="0">
+		<button onclick="setMode();">setMode</button>
+		<br /><br />
+		Speed <input type="text" id="speed" size="3" value="0">
+		<button onclick="setSpeed();">setSpeed</button>
+
+	</body>
+</html>
