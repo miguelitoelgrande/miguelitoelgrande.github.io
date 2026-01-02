@@ -1,0 +1,821 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<title></title>
+	</head>
+
+
+
+
+	<body>
+					
+						<!-- main content -->
+						<style>
+
+	.main-main
+	{
+		max-width: unset;
+	}
+
+	.IroWheelBorder, .IroSliderGradient
+	{
+		box-shadow: 0 0 7px 1px;
+	}
+
+	.connect
+	{
+		vertical-align: baseline;
+	}
+
+	#magic_strip
+	{
+		display: block;
+	}
+
+	#led_net_wf
+	{
+		display: none;
+	}
+
+	#swatches
+	{
+		display: inline-block;
+		vertical-align: top;
+		width: 100%;
+		user-select: none;
+	}
+
+	#rgb
+	{
+		display: inline-block;
+		vertical-align: top;
+	}
+
+	.mode_button
+	{
+		display: inline-flex;
+		width: 10%;
+		max-width: 4rem;
+		aspect-ratio : 1 / 1;
+		border-color: white;
+		border-style: solid;
+		border-width: 2px;
+		border-radius: 50%;
+		box-shadow: 0 0 5px 1px;
+		cursor: pointer;
+		text-align: center;
+		vertical-align: text-bottom;
+		margin: 0.2rem;
+		padding-top: 3px;
+		align-items: center;
+	}
+
+	.mode_button i
+	{
+		margin-right: 0;
+		font-size: 1.5rem;
+	}
+
+	/* 7 color fade */
+	.mode_button[data-mode="0"]
+	{
+		background: linear-gradient(90deg, 	#0077FF 0%,
+														#00DFDF 16%,
+														#FFFFFF 32%,
+														#008240 48%,
+														#DFDF00 64%,
+														#DF0000 80%,
+														#DF00DF 100%
+														);
+	}
+	/* blink */
+	.mode_button[data-mode="1"]
+	{
+		background: linear-gradient(90deg, #0077FF 33%, #000000 33%, #000000 66%, #0077FF 66%, #0077FF 100%);
+	}
+	.mode_button[data-mode="2"]
+	{
+		background: linear-gradient(90deg, #008240 33%, #000000 33%, #000000 66%, #008240 66%, #008240 100%);
+	}
+	.mode_button[data-mode="3"]
+	{
+		background: linear-gradient(90deg, #DF0000 33%, #000000 33%, #000000 66%, #DF0000 66%, #DF0000 100%);
+	}
+	.mode_button[data-mode="4"]
+	{
+		background: linear-gradient(90deg, #00DFDF 33%, #000000 33%, #000000 66%, #00DFDF 66%, #00DFDF 100%);
+	}
+	.mode_button[data-mode="5"]
+	{
+		background: linear-gradient(90deg, #DF00DF 33%, #000000 33%, #000000 66%, #DF00DF 66%, #DF00DF 100%);
+	}
+	.mode_button[data-mode="6"]
+	{
+		background: linear-gradient(90deg, #DFDF00 33%, #000000 33%, #000000 66%, #DFDF00 66%, #DFDF00 100%);
+	}
+	.mode_button[data-mode="7"]
+	{
+		background: linear-gradient(90deg, #FFFFFF 33%, #000000 33%, #000000 66%, #FFFFFF 66%, #FFFFFF 100%);
+	}
+	/* breathing */
+	.mode_button[data-mode="8"]
+	{
+		background: linear-gradient(90deg, #0077FF 25%, #000000 50%, #0077FF 75%);
+	}
+	.mode_button[data-mode="9"]
+	{
+		background: linear-gradient(90deg, #008240 25%, #000000 50%, #008240 75%);
+	}
+	.mode_button[data-mode="10"]
+	{
+		background: linear-gradient(90deg, #DF0000 25%, #000000 50%, #DF0000 75%);
+	}
+	.mode_button[data-mode="11"]
+	{
+		background: linear-gradient(90deg, #00DFDF 25%, #000000 50%, #00DFDF 75%);
+	}
+	.mode_button[data-mode="12"]
+	{
+		background: linear-gradient(90deg, #DF00DF 25%, #000000 50%, #DF00DF 75%);
+	}
+	.mode_button[data-mode="13"]
+	{
+		background: linear-gradient(90deg, #DFDF00 25%, #000000 50%, #DFDF00 75%);
+	}
+	.mode_button[data-mode="14"]
+	{
+		background: linear-gradient(90deg, #FFFFFF 25%, #000000 50%, #FFFFFF 75%);
+	}
+	/* strobe */
+	.mode_button[data-mode="15"]
+	{
+		background: linear-gradient(90deg, #0077FF 15%, #000000 15%, #000000 30%, #0077FF 30%, #0077FF 45%, #000000 45%, #000000 60%, #0077FF 60%, #0077FF 75%, #000000 75%);
+	}
+	.mode_button[data-mode="16"]
+	{
+		background: linear-gradient(90deg, #008240 15%, #000000 15%, #000000 30%, #008240 30%, #008240 45%, #000000 45%, #000000 60%, #008240 60%, #008240 75%, #000000 75%);
+	}
+	.mode_button[data-mode="17"]
+	{
+		background: linear-gradient(90deg, #DF0000 15%, #000000 15%, #000000 30%, #DF0000 30%, #DF0000 45%, #000000 45%, #000000 60%, #DF0000 60%, #DF0000 75%, #000000 75%);
+	}
+	.mode_button[data-mode="18"]
+	{
+		background: linear-gradient(90deg, #00DFDF 15%, #000000 15%, #000000 30%, #00DFDF 30%, #00DFDF 45%, #000000 45%, #000000 60%, #00DFDF 60%, #00DFDF 75%, #000000 75%);
+	}
+	.mode_button[data-mode="19"]
+	{
+		background: linear-gradient(90deg, #DF00DF 15%, #000000 15%, #000000 30%, #DF00DF 30%, #DF00DF 45%, #000000 45%, #000000 60%, #DF00DF 60%, #DF00DF 75%, #000000 75%);
+	}
+	.mode_button[data-mode="20"]
+	{
+		background: linear-gradient(90deg, #DFDF00 15%, #000000 15%, #000000 30%, #DFDF00 30%, #DFDF00 45%, #000000 45%, #000000 60%, #DFDF00 60%, #DFDF00 75%, #000000 75%);
+	}
+	.mode_button[data-mode="21"]
+	{
+		background: linear-gradient(90deg, #FFFFFF 15%, #000000 15%, #000000 30%, #FFFFFF 30%, #FFFFFF 45%, #000000 45%, #000000 60%, #FFFFFF 60%, #FFFFFF 75%, #000000 75%);
+	}
+	/* 2 color fade */
+	.mode_button[data-mode="22"]
+	{
+		background: linear-gradient(90deg, #DF0000 0%, #FFFFFF 50%, #0077FF 100%);
+	}
+	.mode_button[data-mode="23"]
+	{
+		background: linear-gradient(90deg, #FFFFFF 0%, #FFFFFF 50%, #DF00DF 100%);
+	}
+	.mode_button[data-mode="24"]
+	{
+		background: linear-gradient(90deg, #008240 0%, #FFFFFF 50%, #DF00DF 100%);
+	}
+	.mode_button[data-mode="25"]
+	{
+		background: linear-gradient(90deg, #0077FF 0%, #FFFFFF 50%, #DFDF00 100%);
+	}
+	.mode_button[data-mode="26"]
+	{
+		background: linear-gradient(90deg, #DF0000 0%, #FFFFFF 50%, #00DFDF 100%);
+	}
+	.mode_button[data-mode="27"]
+	{
+		background: linear-gradient(90deg, #DFDF00 0%, #FFFFFF 50%, #00DFDF 100%);
+	}
+	.mode_button[data-mode="28"]
+	{
+		background: linear-gradient(90deg, #DF00DF 0%, #FFFFFF 50%, #00DFDF 100%);
+	}
+	.mode_button[data-mode="29"]
+	{
+		background: linear-gradient(90deg, #DF00DF 0%, #FFFFFF 50%, #DFDF00 100%);
+	}
+	/* 3 color blink */
+	.mode_button[data-mode="30"]
+	{
+		background: linear-gradient(90deg, #0077FF 0%, #0077FF 33%, #008240 33%, #008240 66%, #DF0000 66%, #DF0000 100%);
+	}
+	/* 7 color blink */
+	.mode_button[data-mode="31"]
+	{
+		background: linear-gradient(90deg, 	#0077FF 0%, #0077FF 14%,
+														#008240 14%, #008240 28%,
+														#DF0000 28%, #DF0000 42%,
+														#00DFDF 42%, #00DFDF 56%,
+														#DF00DF 56%, #DF00DF 70%,
+														#DFDF00 70%, #DFDF00 84%,
+														#FFFFFF 84%, #FFFFFF 100%
+														);
+	}
+	/* 3 color fade via black */
+	.mode_button[data-mode="32"]
+	{
+		background: linear-gradient(90deg, 	#000000 0%,
+														#0077FF 16%,
+														#000000 32%,
+														#008240 48%,
+														#000000 64%,
+														#DF0000 80%,
+														#000000 100%
+														);
+	}
+	/* 7 color fade via black */
+	.mode_button[data-mode="33"]
+	{
+		background: linear-gradient(90deg, 	#000000 0%,
+														#0077FF 7%,
+														#000000 14%,
+														#008240 21%,
+														#000000 28%,
+														#DF0000 36%,
+														#000000 42%,
+														#00DFDF 50%,
+														#000000 57%,
+														#DF00DF 64%,
+														#000000 71%,
+														#DFDF00 78%,
+														#000000 86%,
+														#FFFFFF 92%,
+														#000000 100%
+														);
+	}
+	/* 7 color fade */
+	.mode_button[data-mode="34"]
+	{
+		background: linear-gradient(90deg, 	#0077FF 0%,
+														#00DFDF 16%,
+														#008240 32%,
+														#DFDF00 48%,
+														#DF0000 64%,
+														#DF00DF 80%,
+														#FFFFFF 100%
+														);
+	}
+	/* 7 color fade */
+	.mode_button[data-mode="35"]
+	{
+		background: linear-gradient(90deg, 	#0077FF 0%,
+														#00DFDF 16%,
+														#008240 32%,
+														#DFDF00 48%,
+														#DF0000 64%,
+														#DF00DF 80%,
+														#FFFFFF 100%
+														);
+	}
+	/* 7 color fade */
+	.mode_button[data-mode="36"]
+	{
+		background: linear-gradient(90deg, 	#DF0000 0%,
+														#DFDF00 16%,
+														#008240 32%,
+														#00DFDF 48%,
+														#FFFFFF 64%,
+														#0077FF 80%,
+														#DF00DF 100%
+														);
+	}
+	/* 3 color blink via black */
+	.mode_button[data-mode="37"]
+	{
+		background: linear-gradient(90deg, 	#000000 0%,
+														#000000 16%,
+														#0077FF 16%,
+														#0077FF 32%,
+														#000000 32%,
+														#000000 48%,
+														#008240 48%,
+														#008240 64%,
+														#000000 64%,
+														#000000 80%,
+														#DF0000 80%,
+														#DF0000 100%
+														);
+	}
+	/* 7 color blink via black */
+	.mode_button[data-mode="38"]
+	{
+		background: linear-gradient(90deg, 	#000000 0%,
+														#000000 7%,
+														#0077FF 7%,
+														#0077FF 14%,
+														#000000 14%,
+														#000000 21%,
+														#008240 21%,
+														#008240 28%,
+														#000000 28%,
+														#000000 36%,
+														#DF0000 36%,
+														#DF0000 43%,
+														#000000 43%,
+														#000000 50%,
+														#00DFDF 50%,
+														#00DFDF 57%,
+														#000000 57%,
+														#000000 64%,
+														#DF00DF 64%,
+														#DF00DF 71%,
+														#000000 71%,
+														#000000 78%,
+														#DFDF00 78%,
+														#DFDF00 86%,
+														#000000 86%,
+														#000000 93%,
+														#FFFFFF 93%,
+														#FFFFFF 100%
+														);
+	}
+	/* 3 color double strobe */
+	.mode_button[data-mode="39"]
+	{
+		background: linear-gradient(90deg, 	#0077FF 0%,
+														#0077FF 5%,
+														#000000 5%,
+														#000000 10%,
+														#0077FF 10%,
+														#0077FF 15%,
+														#000000 15%,
+														#000000 33%,
+														#008240 33%,
+														#008240 38%,
+														#000000 38%,
+														#000000 43%,
+														#008240 43%,
+														#008240 48%,
+														#000000 48%,
+														#000000 66%,
+														#DF0000 66%,
+														#DF0000 71%,
+														#000000 71%,
+														#000000 76%,
+														#DF0000 76%,
+														#DF0000 81%,
+														#000000 81%,
+														#000000 100%
+														);
+	}
+	/* 7 color double strobe */
+	.mode_button[data-mode="40"]
+	{
+		background: linear-gradient(90deg, 	#0077FF 0%,
+														#0077FF 3%,
+														#000000 3%,
+														#000000 6%,
+														#0077FF 6%,
+														#0077FF 9%,
+														#000000 9%,
+														#000000 14%,
+														#008240 14%,
+														#008240 17%,
+														#000000 17%,
+														#000000 20%,
+														#008240 20%,
+														#008240 23%,
+														#000000 23%,
+														#000000 28%,
+														#DF0000 28%,
+														#DF0000 31%,
+														#000000 31%,
+														#000000 34%,
+														#DF0000 34%,
+														#DF0000 37%,
+														#000000 37%,
+														#000000 42%,
+														#00DFDF 42%,
+														#00DFDF 45%,
+														#000000 45%,
+														#000000 48%,
+														#00DFDF 48%,
+														#00DFDF 51%,
+														#000000 51%,
+														#000000 57%,
+														#DF00DF 57%,
+														#DF00DF 60%,
+														#000000 60%,
+														#000000 63%,
+														#DF00DF 63%,
+														#DF00DF 66%,
+														#000000 66%,
+														#000000 71%,
+														#DFDF00 71%,
+														#DFDF00 74%,
+														#000000 74%,
+														#000000 77%,
+														#DFDF00 77%,
+														#DFDF00 80%,
+														#000000 80%,
+														#000000 86%,
+														#FFFFFF 86%,
+														#FFFFFF 89%,
+														#000000 89%,
+														#000000 92%,
+														#FFFFFF 92%,
+														#FFFFFF 95%,
+														#000000 95%,
+														#000000 100%
+														);
+	}
+	/* lucky */
+	.mode_button[data-mode="240"]
+	{
+		background: linear-gradient(0deg, #833ab4 0%, #fcb045 20%, #fd1d1d 40%, #442cfd 60%, #a6fd38 80%, #fcb045 100%);
+	}
+
+</style>
+
+
+
+
+		Status: <span id="status"></span>
+		<br /><br />
+
+		<script type="module" src="./BluetoothLedStrip.js"></script>
+
+		<script type="module">
+
+			import { BluetoothLedStrip } from './BluetoothLedStrip.js';
+
+			var device;
+
+			// connect callback
+			function onConnect(device)
+			{
+				document.getElementById('status').innerHTML = 'Device ' + device.name + ' connected';
+			}
+
+			// disconnect callback
+			function onDisconnect(device)
+			{
+				document.getElementById('status').innerHTML = 'Device ' + device.name + ' disconnected';
+			}
+
+			// error callback
+			function onError(exception)
+			{
+				document.getElementById('status').innerHTML = 'Error ' + exception + ' occured';
+			}
+
+			// 'Connect' button
+			window.connect = function()
+			{
+				device = new BluetoothLedStrip.Device();
+				device.connect(onConnect, onDisconnect, onError);
+			}
+
+			// 'setRGB' button
+			window.setRGB = function()
+			{
+				const red = document.getElementById('red').value;
+				const green = document.getElementById('green').value;
+				const blue = document.getElementById('blue').value;
+				device.setRGB(red, green, blue);
+			}
+
+			// 'setBrightness' button
+			window.setBrightness = function()
+			{
+				const brightness = document.getElementById('brightness').value;
+				device.setBrightness(brightness);
+			}
+
+			// 'setSwitch' button
+			window.setSwitch = function()
+			{
+				const value = document.getElementById('switch').value;
+				device.setSwitch(value);
+			}
+
+			// 'setMode' button
+			window.setMode = function()
+			{
+				const mode = document.getElementById('mode').value;
+				device.setMode(mode);
+			}
+
+			// 'setSpeed' button
+			window.setSpeed = function()
+			{
+				const speed = document.getElementById('speed').value;
+				device.setSpeed(speed);
+			}
+
+		</script>
+
+		<button onclick="connect();">Connect</button>
+		<br /><br />
+		R <input type="text" id="red" size="3" value="255">
+		G <input type="text" id="green" size="3" value="0">
+		B <input type="text" id="blue" size="3" value="0">
+		<button onclick="setRGB();">setRGB</button>
+		<br /><br />
+		Brightness <input type="text" id="brightness" size="3" value="0">
+		<button onclick="setBrightness();">setBrightness</button>
+		<br /><br />
+		Switch <input type="text" id="switch" size="3" value="0">
+		<button onclick="setSwitch();">setSwitch</button>
+		<br /><br />
+		Mode <input type="text" id="mode" size="3" value="0">
+		<button onclick="setMode();">setMode</button>
+		<br /><br />
+		Speed <input type="text" id="speed" size="3" value="0">
+		<button onclick="setSpeed();">setSpeed</button>
+
+
+<br/>
+<br/>
+<hr>
+<br/>
+
+<div class="container-fluid section-full">
+
+	<div class="row no-gutters justify-content-start">
+		<div class="col-12">
+			<div id="device">
+				<button type="button" class="connect btn btn-primary" onclick="connect();"><i class="material-icons">bluetooth</i>Connect</button>
+				<div id="status" class="mt-3 mb-3">&nbsp;</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="row no-gutters">
+		<div class="col-12 col-lg-6 text-center">
+
+			<div id="magic_strip">
+				<div id="swatches">
+					<div class="mode_button" data-mode="power"><i class="material-icons mx-auto">power_settings_new</i></div>
+					<div class="mode_button" data-mode="0"></div>
+					<div class="mode_button" data-mode="34"></div>
+					<div class="mode_button" data-mode="35"></div>
+					<div class="mode_button" data-mode="36"></div>
+					<div class="mode_button" data-mode="30"></div>
+					<div class="mode_button" data-mode="31"></div>
+					<br>
+					<div class="mode_button" data-mode="32"></div>
+					<div class="mode_button" data-mode="33"></div>
+					<div class="mode_button" data-mode="37"></div>
+					<div class="mode_button" data-mode="38"></div>
+					<div class="mode_button" data-mode="39"></div>
+					<div class="mode_button" data-mode="40"></div>
+					<div class="mode_button" data-mode="240"></div>
+					<br>
+					<div class="mode_button" data-mode="22"></div>
+					<!-- <div class="mode_button" data-mode="23"></div> -->
+					<div class="mode_button" data-mode="24"></div>
+					<div class="mode_button" data-mode="25"></div>
+					<div class="mode_button" data-mode="26"></div>
+					<div class="mode_button" data-mode="27"></div>
+					<div class="mode_button" data-mode="28"></div>
+					<div class="mode_button" data-mode="29"></div>
+					<br>
+					<div class="mode_button" data-mode="1"></div>
+					<div class="mode_button" data-mode="2"></div>
+					<div class="mode_button" data-mode="3"></div>
+					<div class="mode_button" data-mode="4"></div>
+					<div class="mode_button" data-mode="5"></div>
+					<div class="mode_button" data-mode="6"></div>
+					<div class="mode_button" data-mode="7"></div>
+					<br>
+					<div class="mode_button" data-mode="8"></div>
+					<div class="mode_button" data-mode="9"></div>
+					<div class="mode_button" data-mode="10"></div>
+					<div class="mode_button" data-mode="11"></div>
+					<div class="mode_button" data-mode="12"></div>
+					<div class="mode_button" data-mode="13"></div>
+					<div class="mode_button" data-mode="14"></div>
+					<br>
+					<div class="mode_button" data-mode="15"></div>
+					<div class="mode_button" data-mode="16"></div>
+					<div class="mode_button" data-mode="17"></div>
+					<div class="mode_button" data-mode="18"></div>
+					<div class="mode_button" data-mode="19"></div>
+					<div class="mode_button" data-mode="20"></div>
+					<div class="mode_button" data-mode="21"></div>
+
+					<form class="mx-auto px-5 py-4">
+						<div class="form-group">
+							<label for="brightness">Brightness</label>
+							<input type="range" class="form-control-range" min="0" max="255" value="255" id="magic_strip_brightness">
+						</div>
+						<div class="form-group">
+							<label for="speed">Speed</label>
+							<input type="range" class="form-control-range" min="0" max="255" value="128" id="magic_strip_speed">
+						</div>
+					</form>
+
+				</div>
+			</div>
+
+			<div id="led_net_wf">
+				<form class="mx-auto px-5 py-4">
+					<div class="form-group">
+						<label for="mode">Mode</label>
+						<input type="range" class="form-control-range" min="1" max="102" value="1" id="led_net_wf_mode">
+					</div>
+					<div class="form-group">
+						<label for="brightness">Brightness</label>
+						<input type="range" class="form-control-range" min="0" max="100" value="100" id="led_net_wf_brightness">
+					</div>
+					<div class="form-group">
+						<label for="speed">Speed</label>
+						<input type="range" class="form-control-range" min="0" max="100" value="50" id="led_net_wf_speed">
+					</div>
+				</form>
+			</div>
+
+		</div>
+		<div class="col-12 col-lg-6 text-center">
+			<div id="rgb"></div>
+		</div>
+	</div>
+
+	<div class="row no-gutters justify-content-start">
+		<div class="col-12 mt-5">
+			<p>
+				Tested with &lsquo;HTZM&rsquo;, &lsquo;LEDnetWF&rsquo; and &lsquo;KS03&rsquo; devices, but should work also with &lsquo;JMC-A&rsquo;, &lsquo;JMC-B&rsquo;, &lsquo;MAGIC_SHOE&rsquo;, &lsquo;MAGIC_LAMP&rsquo;, &lsquo;LCF&rsquo;, &lsquo;CoolStripMic&rsquo;, &lsquo;CRGB&rsquo;, &lsquo;FS0001&rsquo; and &lsquo;FS0002&rsquo; devices.
+			</p>
+			<p>
+				<a href="https://github.com/the-sz/BluetoothLedStrip" target="_blank">github.com/the-sz/BluetoothLedStrip</a> is used for the Bluetooth communication.
+			</p>
+		</div>
+	</div>
+
+</div>
+
+<script>
+
+	'use strict';
+
+	function documentReady()
+	{
+		// set info test in status div
+		document.getElementById('status').innerHTML = "Click &lsquo;Connect&rsquo; button to select your Bluetooth LED Strip. Control LED Strips that use the &lsquo;MagicStrip&rsquo; <a href=\"https://apps.apple.com/us/app/magicstrip-rgb/id1190522748\" target=\"_blank\">iOS</a>/<a href=\"https://play.google.com/store/apps/details?id=com.jtkj.magicstrip\" target=\"_blank\">Android</a>, &lsquo;Zengge&rsquo; <a href=\"https://play.google.com/store/apps/details?id=com.zengge.blev2\" target=\"_blank\">Android</a> and &lsquo;Keepsmile&rsquo; <a href=\"https://play.google.com/store/apps/details?id=com.huaxin.smartlight\" target=\"_blank\">Android</a> app.";
+
+		// prevent accidental swipe detection
+		$('body').swipe('disable');
+
+		// init color picker
+		var colorPicker = new iro.ColorPicker('#rgb',
+		{
+  			width: 280,
+			color: '#007eff',
+			borderWidth: 2,
+			borderColor: '#FFFFFF',
+		});
+		colorPicker.on('color:change', function(color)
+		{
+			setRGB(color.red, color.green, color.blue);
+		});
+
+		// click onto any mode button
+		$('.mode_button').click(function()
+		{
+			const mode = $(this).data('mode');
+
+			if (mode == 'power')
+				setSwitch();
+			else
+				setMode(mode);
+		});
+
+		// speed was changed
+		$('#magic_strip_speed').on('input change', function()
+		{
+			setSpeed($(this).val());
+		});
+
+		// brightness was changed
+		$('#magic_strip_brightness').on('input change', function()
+		{
+			setBrightness($(this).val());
+		});
+
+		// mode was changed
+		$('#led_net_wf_mode').on('input change', function()
+		{
+			setMode($(this).val());
+		});
+
+		// speed was changed
+		$('#led_net_wf_speed').on('input change', function()
+		{
+			setSpeed($(this).val());
+		});
+
+		// brightness was changed
+		$('#led_net_wf_brightness').on('input change', function()
+		{
+			setBrightness($(this).val());
+		});
+	}
+
+</script>
+
+<script src="iro.min.js"></script>
+<script type="module" src="https://cdn.jsdelivr.net/gh/the-sz/BluetoothLedStrip/dist/BluetoothLedStrip.js"></script>
+
+<script type="module">
+
+	'use strict';
+
+	import { BluetoothLedStrip } from 'https://cdn.jsdelivr.net/gh/the-sz/BluetoothLedStrip/dist/BluetoothLedStrip.js';
+
+	var bluetoothLedStripDevice = undefined;
+
+	// connect callback
+	function onConnect(device)
+	{
+		document.getElementById('status').innerHTML = 'Device &lsquo;' + device.name + '&rsquo; connected.';
+
+		if (bluetoothLedStripDevice.deviceType == BluetoothLedStrip.DeviceType.MAGIC_STRIP)
+		{
+			document.getElementById('magic_strip').style.display = 'block';
+			document.getElementById('led_net_wf').style.display = 'none';
+		}
+		else if ((bluetoothLedStripDevice.deviceType == BluetoothLedStrip.DeviceType.LED_NET_WF) || (bluetoothLedStripDevice.deviceType == BluetoothLedStrip.DeviceType.KEEP_SMILE))
+		{
+			document.getElementById('magic_strip').style.display = 'none';
+			document.getElementById('led_net_wf').style.display = 'block';
+		}
+	}
+
+	// disconnect callback
+	function onDisconnect(device)
+	{
+		document.getElementById('status').innerHTML = 'Device &lsquo;' + device.name + '&rsquo; disconnected.';
+	}
+
+	// error callback
+	function onError(exception)
+	{
+		document.getElementById('status').innerHTML = 'Error &lsquo;' + exception + '&rsquo; occured.';
+	}
+
+	// 'Connect' button
+	window.connect = function()
+	{
+		bluetoothLedStripDevice = new BluetoothLedStrip.Device();
+		bluetoothLedStripDevice.connect(onConnect, onDisconnect, onError);
+	}
+
+	// 'setRGB' button
+	window.setRGB = function(red, green, blue)
+	{
+		if (bluetoothLedStripDevice != undefined)
+			bluetoothLedStripDevice.setRGB(red, green, blue);
+	}
+
+	// 'setSwitch' button
+	window.setSwitch = function()
+	{
+		if (bluetoothLedStripDevice != undefined)
+			bluetoothLedStripDevice.setSwitch(0);
+	}
+
+	// 'setMode' button
+	window.setMode = function(mode)
+	{
+		if (bluetoothLedStripDevice != undefined)
+			bluetoothLedStripDevice.setMode(mode);
+	}
+
+	// 'setSpeed' button
+	window.setSpeed = function(speed)
+	{
+		if (bluetoothLedStripDevice != undefined)
+			bluetoothLedStripDevice.setSpeed(speed);
+	}
+
+	// 'setBrightness' button
+	window.setBrightness = function(brightness)
+	{
+		if (bluetoothLedStripDevice != undefined)
+			bluetoothLedStripDevice.setBrightness(brightness);
+	}
+
+</script>
+
+
+
+
+
+	</body>
+</html>
