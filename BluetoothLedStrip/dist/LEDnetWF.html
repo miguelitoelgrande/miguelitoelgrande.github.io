@@ -28,14 +28,10 @@
 		vertical-align: baseline;
 	}
 
-	#magic_strip
-	{
-		display: block;
-	}
 
 	#led_net_wf
 	{
-		display: none;
+	   display: block;
 	}
 
 	#swatches
@@ -557,73 +553,8 @@
 	</div>
 
 	<div class="row no-gutters">
-		<div class="col-12 col-lg-6 text-center">
 
-			<div id="magic_strip">
-				<div id="swatches">
-					<div class="mode_button" data-mode="power"><i class="material-icons mx-auto">power_settings_new</i></div>
-					<div class="mode_button" data-mode="0"></div>
-					<div class="mode_button" data-mode="34"></div>
-					<div class="mode_button" data-mode="35"></div>
-					<div class="mode_button" data-mode="36"></div>
-					<div class="mode_button" data-mode="30"></div>
-					<div class="mode_button" data-mode="31"></div>
-					<br>
-					<div class="mode_button" data-mode="32"></div>
-					<div class="mode_button" data-mode="33"></div>
-					<div class="mode_button" data-mode="37"></div>
-					<div class="mode_button" data-mode="38"></div>
-					<div class="mode_button" data-mode="39"></div>
-					<div class="mode_button" data-mode="40"></div>
-					<div class="mode_button" data-mode="240"></div>
-					<br>
-					<div class="mode_button" data-mode="22"></div>
-					<!-- <div class="mode_button" data-mode="23"></div> -->
-					<div class="mode_button" data-mode="24"></div>
-					<div class="mode_button" data-mode="25"></div>
-					<div class="mode_button" data-mode="26"></div>
-					<div class="mode_button" data-mode="27"></div>
-					<div class="mode_button" data-mode="28"></div>
-					<div class="mode_button" data-mode="29"></div>
-					<br>
-					<div class="mode_button" data-mode="1"></div>
-					<div class="mode_button" data-mode="2"></div>
-					<div class="mode_button" data-mode="3"></div>
-					<div class="mode_button" data-mode="4"></div>
-					<div class="mode_button" data-mode="5"></div>
-					<div class="mode_button" data-mode="6"></div>
-					<div class="mode_button" data-mode="7"></div>
-					<br>
-					<div class="mode_button" data-mode="8"></div>
-					<div class="mode_button" data-mode="9"></div>
-					<div class="mode_button" data-mode="10"></div>
-					<div class="mode_button" data-mode="11"></div>
-					<div class="mode_button" data-mode="12"></div>
-					<div class="mode_button" data-mode="13"></div>
-					<div class="mode_button" data-mode="14"></div>
-					<br>
-					<div class="mode_button" data-mode="15"></div>
-					<div class="mode_button" data-mode="16"></div>
-					<div class="mode_button" data-mode="17"></div>
-					<div class="mode_button" data-mode="18"></div>
-					<div class="mode_button" data-mode="19"></div>
-					<div class="mode_button" data-mode="20"></div>
-					<div class="mode_button" data-mode="21"></div>
-
-					<form class="mx-auto px-5 py-4">
-						<div class="form-group">
-							<label for="brightness">Brightness</label>
-							<input type="range" class="form-control-range" min="0" max="255" value="255" id="magic_strip_brightness">
-						</div>
-						<div class="form-group">
-							<label for="speed">Speed</label>
-							<input type="range" class="form-control-range" min="0" max="255" value="128" id="magic_strip_speed">
-						</div>
-					</form>
-
-				</div>
-			</div>
-
+		
 			<div id="led_net_wf">
 				<form class="mx-auto px-5 py-4">
 					<div class="form-group">
@@ -638,19 +569,32 @@
 						<label for="speed">Speed</label>
 						<input type="range" class="form-control-range" min="0" max="100" value="50" id="led_net_wf_speed">
 					</div>
+					
+			        <div class="form-group">
+						<label for="speed">R</label>
+						<input type="range" class="form-control-range" min="0" max="255" value="50" id="led_net_wf_red">
+					</div>				
+			        <div class="form-group">
+						<label for="speed">G</label>
+						<input type="range" class="form-control-range" min="0" max="255" value="50" id="led_net_wf_green">
+					</div>														
+			        <div class="form-group">
+						<label for="speed">B</label>
+						<input type="range" class="form-control-range" min="0" max="255" value="50" id="led_net_wf_blue">
+					</div>
+					
+					
 				</form>
 			</div>
 
-		</div>
-		<div class="col-12 col-lg-6 text-center">
-			<div id="rgb"></div>
-		</div>
+		
+
 	</div>
 
 	<div class="row no-gutters justify-content-start">
 		<div class="col-12 mt-5">
 			<p>
-				Tested with &lsquo;HTZM&rsquo;, &lsquo;LEDnetWF&rsquo; and &lsquo;KS03&rsquo; devices, but should work also with &lsquo;JMC-A&rsquo;, &lsquo;JMC-B&rsquo;, &lsquo;MAGIC_SHOE&rsquo;, &lsquo;MAGIC_LAMP&rsquo;, &lsquo;LCF&rsquo;, &lsquo;CoolStripMic&rsquo;, &lsquo;CRGB&rsquo;, &lsquo;FS0001&rsquo; and &lsquo;FS0002&rsquo; devices.
+				Tested with &lsquo;HTZM&rsquo;, &lsquo;LEDnetWF&rsquo; and &lsquo;KS03&rsquo; devices
 			</p>
 			<p>
 				<a href="https://github.com/the-sz/BluetoothLedStrip" target="_blank">github.com/the-sz/BluetoothLedStrip</a> is used for the Bluetooth communication.
@@ -725,6 +669,25 @@
 		{
 			setBrightness($(this).val());
 		});
+		
+		// speed was changed
+		$('#led_net_wf_red').on('input change', function()
+		{
+			setRGB2(); // setRed($(this).val());
+		});
+		
+				// speed was changed
+		$('#led_net_wf_green').on('input change', function()
+		{
+			setRGB2(); // setGreen($(this).val());
+		});
+		
+				// speed was changed
+		$('#led_net_wf_blue').on('input change', function()
+		{
+			setRGB2(); // setBlue($(this).val());
+		});
+		
 	}
 
 </script>
@@ -747,12 +710,12 @@
 
 		if (bluetoothLedStripDevice.deviceType == BluetoothLedStrip.DeviceType.MAGIC_STRIP)
 		{
-			document.getElementById('magic_strip').style.display = 'block';
+		//	document.getElementById('magic_strip').style.display = 'block';
 			document.getElementById('led_net_wf').style.display = 'none';
 		}
 		else if ((bluetoothLedStripDevice.deviceType == BluetoothLedStrip.DeviceType.LED_NET_WF) || (bluetoothLedStripDevice.deviceType == BluetoothLedStrip.DeviceType.KEEP_SMILE))
 		{
-			document.getElementById('magic_strip').style.display = 'none';
+		//	document.getElementById('magic_strip').style.display = 'none';
 			document.getElementById('led_net_wf').style.display = 'block';
 		}
 	}
@@ -810,6 +773,21 @@
 		if (bluetoothLedStripDevice != undefined)
 			bluetoothLedStripDevice.setBrightness(brightness);
 	}
+
+	// 'setRGB' button
+	window.setRGB2 = function()
+	{
+		const red = document.getElementById('led_net_wf_red').value;
+		const green = document.getElementById('led_net_wf_green').value;
+		const blue = document.getElementById('led_net_wf_blue').value;	
+		if (bluetoothLedStripDevice != undefined) {				
+			bluetoothLedStripDevice.setRGB(red, green, blue);						
+		}
+	}
+
+
+
+
 
 </script>
 
