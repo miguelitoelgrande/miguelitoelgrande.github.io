@@ -178,7 +178,7 @@
         // const LEDNETWF_SERVICE = '0000fff0-0000-1000-8000-00805f9b34fb';	
         const LEDNETWF_SERVICE = '0000ffff-0000-1000-8000-00805f9b34fb';
         // const LEDNETWF_CHAR = '0000fff1-0000-1000-8000-00805f9b34fb';
-		const LEDNETWF_CHAR = '0000ff01-0000-1000-8000-00805f9b34fb';
+		const LEDNETWF_CHAR = '0000ff01-0000-1000-8000-00805f9b34fb';  // CHAR== characteristics
 
         let bluetoothDevice = null;
         let gattServer = null;
@@ -206,11 +206,8 @@
             try {
                 logCommand('Requesting device...');
                 
-                // Use acceptAllDevices to show all Bluetooth devices
-                // Some LEDnetWF devices don't advertise their service UUID properly
                 bluetoothDevice = await navigator.bluetooth.requestDevice({
-                    acceptAllDevices: true,
-                    optionalServices: [LEDNETWF_SERVICE]
+                    filters: [{ services: [LEDNETWF_SERVICE] }]
                 });
 
                 bluetoothDevice.addEventListener('gattserverdisconnected', onDisconnected);
