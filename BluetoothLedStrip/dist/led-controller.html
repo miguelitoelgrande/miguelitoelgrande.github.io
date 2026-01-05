@@ -479,6 +479,31 @@
         let isConnected = false;
         let currentRGB = { r: 255, g: 0, b: 0 };
         let gattServer = null;
+        let commandQueue = [];
+        let isProcessingQueue = false;
+
+        // Queue commands with small delays to avoid overwhelming the device
+        function queueCommand(commandFunc, logMessage) {
+            commandQueue.push({ func: commandFunc, log: logMessage });
+            processQueue();
+        }
+
+        async function processQueue() {
+            if (isProcessingQueue || commandQueue.length === 0) return;
+            
+            isProcessingQueue = true;
+            while (commandQueue.length > 0) {
+                const { func, log } = commandQueue.shift();
+                try {
+                    func();
+                    if (log) logCommand(log);
+                    await new Promise(resolve => setTimeout(resolve, 50)); // 50ms delay between commands
+                } catch (error) {
+                    logCommand(`Error: ${error}`);
+                }
+            }
+            isProcessingQueue = false;
+        }
 
         // Logging function
         function logCommand(command) {
@@ -589,8 +614,24 @@
             document.getElementById('colorDisplay').style.background = `rgb(${r}, ${g}, ${b})`;
             
             if (device && isConnected) {
-                device.setRGB(r, g, b);
-                logCommand(`setRGB(${r}, ${g}, ${b})`);
+                // Ensure power is on
+                const onBtn = document.getElementById('onBtn');
+                if (!onBtn.classList.contains('active')) {
+                    queueCommand(() => device.setSwitch(1), `setSwitch(1) - auto-on for color change`);
+                    onBtn.classList.add('active');
+                    document.getElementById('offBtn').classList.remove('active');
+                }
+                
+                // Set mode to static (0) for manual color control
+                const modeButtons = document.querySelectorAll('.mode-btn');
+                if (!modeButtons[0].classList.contains('active')) {
+                    queueCommand(() => device.setMode(0), `setMode(0) - static mode for color control`);
+                    modeButtons.forEach((btn, index) => {
+                        btn.classList.toggle('active', index === 0);
+                    });
+                }
+                
+                queueCommand(() => device.setRGB(r, g, b), `setRGB(${r}, ${g}, ${b})`);
             }
         }
 
