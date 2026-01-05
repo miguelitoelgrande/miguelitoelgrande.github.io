@@ -20,17 +20,8 @@
             background: #f8f9fa; border-radius: 12px; padding: 15px;
             margin-bottom: 25px; border-left: 4px solid #667eea;
         }
-        .status-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .status-row:last-child { margin-bottom: 0; }
-        .status-label { font-weight: 600; color: #666; font-size: 14px; }
+        .status-label { font-weight: 600; color: #666; font-size: 14px; margin-bottom: 10px; }
         .status-value { font-size: 14px; color: #333; font-weight: 500; }
-        .status-indicator {
-            display: inline-block; width: 10px; height: 10px;
-            border-radius: 50%; margin-right: 8px;
-        }
-        .status-disconnected { background: #dc3545; }
-        .status-connected { background: #28a745; animation: pulse 2s infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
         .command-log {
             background: #2d3748; color: #00ff00; font-family: 'Courier New', monospace;
             font-size: 12px; padding: 10px; border-radius: 8px;
@@ -90,13 +81,9 @@
             font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.3s;
         }
         .mode-btn.active { background: #667eea; color: white; border-color: #667eea; }
-        .device-info {
-            background: #e9ecef; padding: 10px; border-radius: 8px;
-            font-size: 12px; margin-top: 10px;
-        }
         .info-note { font-size: 12px; color: #666; font-style: italic; margin-top: 10px; }
         .test-btn {
-            padding: 10px; color: white; border: none; border-radius: 8px;
+            padding: 10px 15px; color: white; border: none; border-radius: 8px;
             font-weight: 600; cursor: pointer; margin: 5px;
         }
     </style>
@@ -106,31 +93,18 @@
         <h1>💡 White LED Strip Controller</h1>
 
         <div class="status-section">
-            <div class="status-row">
-                <span class="status-label">Connection:</span>
-                <span class="status-value">
-                    <span class="status-indicator status-disconnected" id="statusIndicator"></span>
-                    <span id="connectionStatus">Disconnected</span>
-                </span>
-            </div>
-            <div class="status-row">
-                <span class="status-label">Device:</span>
-                <span class="status-value" id="deviceName">None</span>
-            </div>
-            <div class="device-info" id="deviceInfo" style="display: none;">
-                <strong>Device Information:</strong><br>
-                <span id="deviceDetails">No device info available</span>
-            </div>
-            <div class="command-log" id="commandLog">Ready to connect...</div>
+            <div class="status-label">Status:</div>
+            <div class="status-value" id="status">Ready to connect...</div>
+            <div class="command-log" id="commandLog">Waiting for connection...</div>
         </div>
 
-        <button class="connect-btn" id="connectBtn" onclick="toggleConnection()">Connect to LED Strip</button>
+        <button class="connect-btn" onclick="connect()">Connect to LED Strip</button>
 
         <div class="control-section">
             <div class="control-title">Power</div>
             <div class="switch-container">
-                <button class="switch-btn" id="offBtn" onclick="setPower(0)">OFF</button>
-                <button class="switch-btn active" id="onBtn" onclick="setPower(1)">ON</button>
+                <button class="switch-btn" id="offBtn" onclick="setSwitch(0)">OFF</button>
+                <button class="switch-btn active" id="onBtn" onclick="setSwitch(1)">ON</button>
             </div>
         </div>
 
@@ -140,13 +114,13 @@
                 <span>Brightness</span>
                 <span class="slider-value"><span id="brightnessValue">100</span>%</span>
             </div>
-            <input type="range" id="brightnessSlider" min="1" max="100" value="100">
+            <input type="range" id="brightnessSlider" min="1" max="100" value="100" oninput="updateBrightness(this.value)">
         </div>
 
         <div class="control-section">
             <div class="control-title">Color Temperature (Warm/Cool White)</div>
             <div class="temperature-gradient"></div>
-            <input type="range" id="temperatureSlider" min="0" max="100" value="50" step="1">
+            <input type="range" id="temperatureSlider" min="0" max="100" value="50" step="1" oninput="updateTemperature(this.value)">
             <div class="slider-label">
                 <span>Warm (2700K)</span>
                 <span class="slider-value"><span id="temperatureValue">4600</span>K</span>
@@ -154,28 +128,26 @@
             </div>
             <div class="temperature-preview" id="temperaturePreview"></div>
             <div class="info-note">
-                Set device to mode 97 (Manual) for temperature control. Test buttons below to verify white commands work.
+                For white temperature control: Set mode to 97 (Manual), then use slider above.
             </div>
-        </div>
-
-        <div class="control-section">
-            <div class="control-title">Test White Commands</div>
-            <button class="test-btn" style="background: #28a745;" onclick="testWhiteWarm()">Test Warm White</button>
-            <button class="test-btn" style="background: #17a2b8;" onclick="testWhiteCool()">Test Cool White</button>
+            <div style="margin-top: 10px;">
+                <button class="test-btn" style="background: #28a745;" onclick="testWhiteWarm()">Test Warm</button>
+                <button class="test-btn" style="background: #17a2b8;" onclick="testWhiteCool()">Test Cool</button>
+            </div>
         </div>
 
         <div class="control-section">
             <div class="control-title">Light Mode</div>
             <div style="font-size: 12px; color: #666; margin-bottom: 10px;">
-                LEDnetWF has 113 modes. Use <strong>Manual (97)</strong> for temperature control.
+                Use <strong>Manual (97)</strong> for manual temperature control.
             </div>
             <div class="mode-grid">
-                <button class="mode-btn active" onclick="setMode(97)">Manual</button>
-                <button class="mode-btn" onclick="setMode(38)">Fade</button>
-                <button class="mode-btn" onclick="setMode(1)">Jump</button>
-                <button class="mode-btn" onclick="setMode(50)">Rainbow</button>
-                <button class="mode-btn" onclick="setMode(80)">Strobe</button>
-                <button class="mode-btn" onclick="setMode(100)">Wave</button>
+                <button class="mode-btn active" onclick="setModeBtn(97)">Manual (97)</button>
+                <button class="mode-btn" onclick="setModeBtn(38)">Fade (38)</button>
+                <button class="mode-btn" onclick="setModeBtn(1)">Jump (1)</button>
+                <button class="mode-btn" onclick="setModeBtn(50)">Rainbow (50)</button>
+                <button class="mode-btn" onclick="setModeBtn(80)">Strobe (80)</button>
+                <button class="mode-btn" onclick="setModeBtn(100)">Wave (100)</button>
             </div>
             <div style="margin-top: 10px; display: flex; gap: 5px;">
                 <input type="number" id="customMode" min="1" max="113" placeholder="1-113" 
@@ -193,168 +165,75 @@
                 <span>Speed</span>
                 <span class="slider-value"><span id="speedValue">50</span>%</span>
             </div>
-            <input type="range" id="speedSlider" min="0" max="100" value="50">
+            <input type="range" id="speedSlider" min="0" max="100" value="50" oninput="updateSpeed(this.value)">
         </div>
     </div>
 
-    <script>
-        // Standalone Bluetooth LED Controller - No external dependencies
-        
-        const LEDNETWF_SERVICE = '0000fff0-0000-1000-8000-00805f9b34fb';
-        const LEDNETWF_CHAR = '0000fff1-0000-1000-8000-00805f9b34fb';
+    <!-- Use YOUR ORIGINAL working library -->
+    <script type="module" src="./BluetoothLedStrip.js"></script>
 
-        let bluetoothDevice = null;
-        let characteristic = null;
-        let isConnected = false;
+    <script type="module">
+        import { BluetoothLedStrip } from './BluetoothLedStrip.js';
 
-        function logCommand(command) {
+        var device;
+
+        function logCommand(msg) {
             const log = document.getElementById('commandLog');
-            const timestamp = new Date().toLocaleTimeString();
-            log.innerHTML = `[${timestamp}] ${command}<br>` + log.innerHTML;
+            const time = new Date().toLocaleTimeString();
+            log.innerHTML = `[${time}] ${msg}<br>` + log.innerHTML;
         }
 
-        async function toggleConnection() {
-            if (!isConnected) {
-                try {
-                    logCommand('Requesting Bluetooth device...');
-                    
-                    bluetoothDevice = await navigator.bluetooth.requestDevice({
-                        filters: [{ services: [LEDNETWF_SERVICE] }]
-                    });
-
-                    logCommand('Connecting to GATT Server...');
-                    const server = await bluetoothDevice.gatt.connect();
-                    
-                    logCommand('Getting service...');
-                    const service = await server.getPrimaryService(LEDNETWF_SERVICE);
-                    
-                    logCommand('Getting characteristic...');
-                    characteristic = await service.getCharacteristic(LEDNETWF_CHAR);
-
-                    bluetoothDevice.addEventListener('gattserverdisconnected', onDisconnected);
-
-                    isConnected = true;
-                    document.getElementById('connectionStatus').textContent = 'Connected';
-                    document.getElementById('deviceName').textContent = bluetoothDevice.name;
-                    document.getElementById('statusIndicator').className = 'status-indicator status-connected';
-                    document.getElementById('connectBtn').textContent = 'Disconnect';
-                    
-                    const deviceInfo = document.getElementById('deviceInfo');
-                    const deviceDetails = document.getElementById('deviceDetails');
-                    deviceInfo.style.display = 'block';
-                    deviceDetails.innerHTML = `Name: ${bluetoothDevice.name}<br>ID: ${bluetoothDevice.id}`;
-                    
-                    logCommand('✓ Connected to ' + bluetoothDevice.name);
-
-                } catch (error) {
-                    logCommand('Connection ERROR: ' + error);
-                    console.error('Connection error:', error);
-                    alert('Connection failed: ' + error.message);
-                }
-            } else {
-                if (bluetoothDevice && bluetoothDevice.gatt.connected) {
-                    bluetoothDevice.gatt.disconnect();
-                }
-            }
+        // Original callbacks - UNCHANGED
+        function onConnect(dev) {
+            document.getElementById('status').innerHTML = 'Device ' + dev.name + ' connected';
+            logCommand('Connected to ' + dev.name);
         }
 
-        function onDisconnected() {
-            isConnected = false;
-            characteristic = null;
-            document.getElementById('connectionStatus').textContent = 'Disconnected';
-            document.getElementById('deviceName').textContent = 'None';
-            document.getElementById('statusIndicator').className = 'status-indicator status-disconnected';
-            document.getElementById('connectBtn').textContent = 'Connect to LED Strip';
-            document.getElementById('deviceInfo').style.display = 'none';
+        function onDisconnect(dev) {
+            document.getElementById('status').innerHTML = 'Device ' + dev.name + ' disconnected';
             logCommand('Disconnected');
         }
 
-        async function sendPacket(packet, description) {
-            if (!characteristic) {
-                logCommand('ERROR: Not connected');
-                return false;
+        function onError(exception) {
+            document.getElementById('status').innerHTML = 'Error ' + exception + ' occured';
+            logCommand('ERROR: ' + exception);
+        }
+
+        // Original connect - UNCHANGED
+        window.connect = function() {
+            device = new BluetoothLedStrip.Device();
+            device.connect(onConnect, onDisconnect, onError);
+        }
+
+        // Helper: Send white temperature packet
+        async function sendWhitePacket(temperature, brightness) {
+            if (!device || !device.characteristic) {
+                logCommand('ERROR: Device not connected');
+                return;
             }
 
             try {
-                await characteristic.writeValue(packet);
-                if (description) logCommand(description);
-                return true;
+                const packet = new Uint8Array([
+                    0x00, 0x10, 0x80, 0x00, 0x00, 0x0d, 0x0e, 0x0b,
+                    0x3b, 0xb1, 0x00, 0x00, 0x00,
+                    Math.round(temperature),
+                    Math.round(brightness),
+                    0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x00
+                ]);
+                
+                // Calculate checksum
+                let sum = 0;
+                for (let i = 9; i < packet.length - 1; i++) {
+                    sum += packet[i];
+                }
+                packet[20] = sum & 0xFF;
+                
+                await device.characteristic.writeValue(packet);
+                logCommand(`White: temp=${temperature}, bright=${brightness}`);
             } catch (error) {
-                logCommand('Send ERROR: ' + error);
-                return false;
+                logCommand(`White error: ${error}`);
             }
-        }
-
-        function calculateChecksum(packet) {
-            let sum = 0;
-            for (let i = 9; i < packet.length - 1; i++) {
-                sum += packet[i];
-            }
-            return sum & 0xFF;
-        }
-
-        async function sendWhiteTemperature(temperature, brightness) {
-            const packet = new Uint8Array([
-                0x00, 0x10, 0x80, 0x00, 0x00, 0x0d, 0x0e, 0x0b,
-                0x3b, 0xb1, 0x00, 0x00, 0x00,
-                Math.round(temperature),
-                Math.round(brightness),
-                0x00, 0x00, 0x00, 0x00, 0x00,
-                0x00
-            ]);
-            packet[20] = calculateChecksum(packet);
-            return await sendPacket(packet, `WHITE temp=${temperature}, bright=${brightness}`);
-        }
-
-        async function sendRGB(r, g, b) {
-            const packet = new Uint8Array([
-                0x00, 0x05, 0x80, 0x00, 0x00, 0x0d, 0x0e, 0x0b,
-                0x3b, 0xa1, r, g, b, 0x00, 0x00, 0x00,
-                0x00, 0x00, 0x00, 0x00, 0x00
-            ]);
-            packet[20] = calculateChecksum(packet);
-            return await sendPacket(packet, `RGB(${r},${g},${b})`);
-        }
-
-        async function sendBrightness(value) {
-            const packet = new Uint8Array([
-                0x00, 0x06, 0x80, 0x00, 0x00, 0x0d, 0x0e, 0x0b,
-                0x3b, 0x34, value, 0x00, 0x00, 0x00, 0x00, 0x00,
-                0x00, 0x00, 0x00, 0x00, 0x00
-            ]);
-            packet[20] = calculateChecksum(packet);
-            return await sendPacket(packet, `Brightness=${value}`);
-        }
-
-        async function sendSwitch(state) {
-            const isOn = state ? 0x23 : 0x24;
-            const packet = new Uint8Array([
-                0x00, state ? 0x04 : 0x5b, 0x80, 0x00, 0x00, 0x0d, 0x0e, 0x0b,
-                0x3b, isOn, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                0x00, 0x32, 0x00, 0x00, 0x00
-            ]);
-            packet[20] = calculateChecksum(packet);
-            return await sendPacket(packet, `Power ${state ? 'ON' : 'OFF'}`);
-        }
-
-        async function sendMode(mode) {
-            const packet = new Uint8Array([
-                0x00, 0x07, 0x80, 0x00, 0x00, 0x0d, 0x0e, 0x0b,
-                0x3b, 0x2c, mode, 0x00, 0x00, 0x00, 0x00, 0x00,
-                0x00, 0x00, 0x00, 0x00, 0x00
-            ]);
-            packet[20] = calculateChecksum(packet);
-            return await sendPacket(packet, `Mode=${mode}`);
-        }
-
-        async function sendSpeed(speed) {
-            const packet = new Uint8Array([
-                0x00, 0x08, 0x80, 0x00, 0x00, 0x0d, 0x0e, 0x0b,
-                0x3b, 0x2b, speed, 0x00, 0x00, 0x00, 0x00, 0x00,
-                0x00, 0x00, 0x00, 0x00, 0x00
-            ]);
-            packet[20] = calculateChecksum(packet);
-            return await sendPacket(packet, `Speed=${speed}`);
         }
 
         function percentToKelvin(percent) {
@@ -364,18 +243,15 @@
         function kelvinToRgb(kelvin) {
             const temp = kelvin / 100;
             let r, g, b;
-
             if (temp <= 66) {
                 r = 255;
-                g = temp - 2;
-                g = 99.4708025861 * Math.log(g) - 161.1195681661;
+                g = 99.4708025861 * Math.log(temp - 2) - 161.1195681661;
                 b = temp <= 19 ? 0 : 138.5177312231 * Math.log(temp - 10) - 305.0447927307;
             } else {
                 r = 329.698727446 * Math.pow(temp - 60, -0.1332047592);
                 g = 288.1221695283 * Math.pow(temp - 60, -0.0755148492);
                 b = 255;
             }
-
             return {
                 r: Math.max(0, Math.min(255, Math.round(r))),
                 g: Math.max(0, Math.min(255, Math.round(g))),
@@ -391,71 +267,77 @@
                 `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
         }
 
-        // Event Handlers
-        window.testWhiteWarm = async () => {
-            logCommand('=== TEST: Warm White ===');
-            await sendWhiteTemperature(0, 100);
-        };
+        // New functions
+        window.updateTemperature = async function(value) {
+            updateTemperaturePreview(value);
+            if (device) {
+                const brightness = parseInt(document.getElementById('brightnessSlider').value);
+                await sendWhitePacket(parseInt(value), brightness);
+            }
+        }
 
-        window.testWhiteCool = async () => {
-            logCommand('=== TEST: Cool White ===');
-            await sendWhiteTemperature(100, 100);
-        };
+        window.updateBrightness = function(value) {
+            document.getElementById('brightnessValue').textContent = value;
+            if (device) {
+                device.setBrightness(value);
+                logCommand(`Brightness=${value}`);
+            }
+        }
 
-        window.setPower = async (state) => {
+        window.updateSpeed = function(value) {
+            document.getElementById('speedValue').textContent = value;
+            if (device) {
+                device.setSpeed(value);
+                logCommand(`Speed=${value}`);
+            }
+        }
+
+        window.setSwitch = function(value) {
             const offBtn = document.getElementById('offBtn');
             const onBtn = document.getElementById('onBtn');
-            
-            if (state === 0) {
+            if (value === 0) {
                 offBtn.classList.add('active');
                 onBtn.classList.remove('active');
             } else {
                 onBtn.classList.add('active');
                 offBtn.classList.remove('active');
             }
-            
-            await sendSwitch(state);
-        };
+            if (device) {
+                device.setSwitch(value);
+                logCommand(`Power ${value ? 'ON' : 'OFF'}`);
+            }
+        }
 
-        window.setMode = async (mode) => {
+        window.setModeBtn = function(mode) {
             const buttons = document.querySelectorAll('.mode-btn');
             buttons.forEach(btn => {
                 const btnMode = btn.getAttribute('onclick').match(/\d+/);
                 btn.classList.toggle('active', btnMode && parseInt(btnMode[0]) === mode);
             });
-            await sendMode(mode);
-        };
+            if (device) {
+                device.setMode(mode);
+                logCommand(`Mode=${mode}`);
+            }
+        }
 
-        window.setCustomMode = () => {
+        window.setCustomMode = function() {
             const mode = parseInt(document.getElementById('customMode').value);
             if (mode >= 1 && mode <= 113) {
-                setMode(mode);
+                setModeBtn(mode);
             } else {
-                alert('Please enter 1-113');
+                alert('Enter mode 1-113');
             }
-        };
+        }
 
-        // Sliders
-        document.getElementById('temperatureSlider').addEventListener('input', async function() {
-            const percent = parseInt(this.value);
-            updateTemperaturePreview(percent);
-            if (isConnected) {
-                const brightness = parseInt(document.getElementById('brightnessSlider').value);
-                await sendWhiteTemperature(percent, brightness);
-            }
-        });
+        window.testWhiteWarm = async function() {
+            logCommand('=== TEST: Warm White ===');
+            await sendWhitePacket(0, 100);
+        }
 
-        document.getElementById('brightnessSlider').addEventListener('input', async function() {
-            const value = parseInt(this.value);
-            document.getElementById('brightnessValue').textContent = value;
-            if (isConnected) await sendBrightness(value);
-        });
-
-        document.getElementById('speedSlider').addEventListener('input', async function() {
-            const value = parseInt(this.value);
-            document.getElementById('speedValue').textContent = value;
-            if (isConnected) await sendSpeed(value);
-        });
+        window.testWhiteCool = async function() {
+            logCommand('=== TEST: Cool White ===');
+            await sendWhitePacket(100, 100);
+        }
 
         // Initialize
         updateTemperaturePreview(50);
