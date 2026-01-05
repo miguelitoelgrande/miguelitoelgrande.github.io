@@ -410,13 +410,24 @@
         <!-- Mode Selection -->
         <div class="control-section">
             <div class="control-title">Light Mode</div>
+            <div style="font-size: 12px; color: #666; margin-bottom: 10px;">
+                LEDnetWF has 113 modes (1-113). Experiment to find your favorites!
+            </div>
             <div class="mode-grid">
                 <button class="mode-btn active" onclick="setMode(97)">Manual</button>
-                <button class="mode-btn" onclick="setMode(1)">Mode 1</button>
-                <button class="mode-btn" onclick="setMode(2)">Mode 2</button>
-                <button class="mode-btn" onclick="setMode(3)">Mode 3</button>
-                <button class="mode-btn" onclick="setMode(50)">Mode 50</button>
-                <button class="mode-btn" onclick="setMode(100)">Mode 100</button>
+                <button class="mode-btn" onclick="setMode(38)">Fade</button>
+                <button class="mode-btn" onclick="setMode(1)">Jump RGB</button>
+                <button class="mode-btn" onclick="setMode(50)">Rainbow</button>
+                <button class="mode-btn" onclick="setMode(80)">Strobe</button>
+                <button class="mode-btn" onclick="setMode(100)">Wave</button>
+            </div>
+            <div style="margin-top: 10px; display: flex; gap: 5px; align-items: center;">
+                <input type="number" id="customMode" min="1" max="113" placeholder="1-113" 
+                       style="flex: 1; padding: 8px; border: 2px solid #ddd; border-radius: 8px; font-size: 14px;">
+                <button onclick="setCustomMode()" 
+                        style="padding: 8px 15px; background: #667eea; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                    Try
+                </button>
             </div>
         </div>
 
@@ -740,6 +751,19 @@
             
             if (device && isConnected) {
                 queueCommand(() => device.setMode(mode), `setMode(${mode})`);
+            }
+        }
+
+        // Custom mode tester
+        window.setCustomMode = function() {
+            const modeInput = document.getElementById('customMode');
+            const mode = parseInt(modeInput.value);
+            
+            if (mode >= 1 && mode <= 113) {
+                setMode(mode);
+                logCommand(`Testing custom mode: ${mode}`);
+            } else {
+                alert('Please enter a mode number between 1 and 113');
             }
         }
 
