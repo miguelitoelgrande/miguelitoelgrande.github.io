@@ -204,8 +204,11 @@
             try {
                 logCommand('Requesting device...');
                 
+                // Use acceptAllDevices to show all Bluetooth devices
+                // Some LEDnetWF devices don't advertise their service UUID properly
                 bluetoothDevice = await navigator.bluetooth.requestDevice({
-                    filters: [{ services: [LEDNETWF_SERVICE] }]
+                    acceptAllDevices: true,
+                    optionalServices: [LEDNETWF_SERVICE]
                 });
 
                 bluetoothDevice.addEventListener('gattserverdisconnected', onDisconnected);
