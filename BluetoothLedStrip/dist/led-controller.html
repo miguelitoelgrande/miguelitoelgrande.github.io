@@ -354,29 +354,33 @@
                     document.getElementById('offBtn').classList.remove('active');
                 }
                 
-                // LEDnetWF protocol: white temperature is 0-100 (0x00-0x64)
-                // We need to send a raw BLE command since the library doesn't have this function
-                // Try multiple approaches
+                // Send WHITE TEMPERATURE packet (for deviceType=2)
+                const temperature = percent; // 0-100
+                const brightness = parseInt(document.getElementById('brightnessSlider').value);
                 
-                // Approach 1: Try using setRGB with calculated temp colors
-                const kelvin = percentToKelvin(percent);
-                const rgb = kelvinToRgb(kelvin);
-                queueCommand(() => device.setRGB(rgb.r, rgb.g, rgb.b), `setRGB(${rgb.r},${rgb.g},${rgb.b}) for ${kelvin}K`);
-                
-                // Approach 2: Try sending raw BLE if we can access the characteristic
-                if (device.device && device.device.gatt && device.characteristic) {
+                queueCommand(() => {
                     try {
-                        // LEDnetWF white command format (needs verification)
-                        // This is experimental - check the command log to see if it works
-                        const brightness = parseInt(document.getElementById('brightnessSlider').value);
-                        const whiteCmd = new Uint8Array([0x56, percent, brightness, 0xAA]);
-                        queueCommand(() => {
-                            device.characteristic.writeValue(whiteCmd);
-                        }, `RAW: setWhite(temp:${percent}, bright:${brightness})`);
-                    } catch (e) {
-                        logCommand(`Raw BLE write failed: ${e}`);
+                        const packet = new Uint8Array([
+                            0x00, 0x10, 0x80, 0x00, 0x00, 0x0d, 0x0e, 0x0b,
+                            0x3b, 0xb1, 0x00, 0x00, 0x00,
+                            temperature,  // byte 13
+                            brightness,   // byte 14
+                            0x00, 0x00, 0x00, 0x00, 0x00,
+                            0x00 // checksum placeholder
+                        ]);
+                        
+                        // Calculate checksum
+                        let sum = 0;
+                        for (let i = 9; i < packet.length - 1; i++) {
+                            sum += packet[i];
+                        }
+                        packet[20] = sum & 0xFF;
+                        
+                        device.characteristic.writeValue(packet);
+                    } catch (error) {
+                        logCommand(`White temp error: ${error}`);
                     }
-                }
+                }, `setWhiteTemp(${temperature}, ${brightness}) = ${percentToKelvin(percent)}K`);
             }
         });
 
@@ -453,9 +457,35 @@
                 return;
             }
             
-            logCommand('=== Testing WARM white (temp=0) ===');
-            // Test RGB approach for warm white (2700K)
-            queueCommand(() => device.setRGB(255, 197, 143), 'setRGB(255,197,143) - warm white');
+            logCommand('=== Testing WHITE TEMPERATURE packet (WARM) ===');
+            
+            // Test the actual LEDnetWF white command packet
+            // This is what deviceType=2 needs instead of RGB
+            try {
+                const temperature = 0;  // 0 = warm white
+                const brightness = 100; // 100% brightness
+                
+                const packet = new Uint8Array([
+                    0x00, 0x10, 0x80, 0x00, 0x00, 0x0d, 0x0e, 0x0b,
+                    0x3b, 0xb1, 0x00, 0x00, 0x00,
+                    temperature,  // byte 13
+                    brightness,   // byte 14
+                    0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x00 // checksum placeholder
+                ]);
+                
+                // Calculate checksum
+                let sum = 0;
+                for (let i = 9; i < packet.length - 1; i++) {
+                    sum += packet[i];
+                }
+                packet[20] = sum & 0xFF;
+                
+                device.characteristic.writeValue(packet);
+                logCommand(`Sent WHITE packet: temp=${temperature}, bright=${brightness}, checksum=${packet[20]}`);
+            } catch (error) {
+                logCommand(`Error sending white packet: ${error}`);
+            }
         }
 
         window.testWhiteCool = function() {
@@ -464,9 +494,33 @@
                 return;
             }
             
-            logCommand('=== Testing COOL white (temp=100) ===');
-            // Test RGB approach for cool white (6500K)
-            queueCommand(() => device.setRGB(255, 250, 244), 'setRGB(255,250,244) - cool white');
+            logCommand('=== Testing WHITE TEMPERATURE packet (COOL) ===');
+            
+            try {
+                const temperature = 100;  // 100 = cool white
+                const brightness = 100;   // 100% brightness
+                
+                const packet = new Uint8Array([
+                    0x00, 0x10, 0x80, 0x00, 0x00, 0x0d, 0x0e, 0x0b,
+                    0x3b, 0xb1, 0x00, 0x00, 0x00,
+                    temperature,  // byte 13
+                    brightness,   // byte 14
+                    0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x00 // checksum placeholder
+                ]);
+                
+                // Calculate checksum
+                let sum = 0;
+                for (let i = 9; i < packet.length - 1; i++) {
+                    sum += packet[i];
+                }
+                packet[20] = sum & 0xFF;
+                
+                device.characteristic.writeValue(packet);
+                logCommand(`Sent WHITE packet: temp=${temperature}, bright=${brightness}, checksum=${packet[20]}`);
+            } catch (error) {
+                logCommand(`Error sending white packet: ${error}`);
+            }
         }
 
         window.logDeviceMethods = function() {
