@@ -95,11 +95,15 @@
             font-size: 12px; margin-top: 10px;
         }
         .info-note { font-size: 12px; color: #666; font-style: italic; margin-top: 10px; }
+        .test-btn {
+            padding: 10px; color: white; border: none; border-radius: 8px;
+            font-weight: 600; cursor: pointer; margin: 5px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>💡 White LED Strip Controller v2</h1>
+        <h1>💡 White LED Strip Controller</h1>
 
         <div class="status-section">
             <div class="status-row">
@@ -150,8 +154,14 @@
             </div>
             <div class="temperature-preview" id="temperaturePreview"></div>
             <div class="info-note">
-                For manual temperature control, make sure device is in mode 97 (Manual). Animation modes may override temperature.
+                Set device to mode 97 (Manual) for temperature control. Test buttons below to verify white commands work.
             </div>
+        </div>
+
+        <div class="control-section">
+            <div class="control-title">Test White Commands</div>
+            <button class="test-btn" style="background: #28a745;" onclick="testWhiteWarm()">Test Warm White</button>
+            <button class="test-btn" style="background: #17a2b8;" onclick="testWhiteCool()">Test Cool White</button>
         </div>
 
         <div class="control-section">
@@ -178,27 +188,6 @@
         </div>
 
         <div class="control-section">
-            <div class="control-title">Diagnostics & Testing</div>
-            <div style="font-size: 12px; color: #666; margin-bottom: 10px;">
-                Use these tools to test different commands and see what works with your device.
-            </div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
-                <button onclick="testWhiteCommand()" 
-                        style="padding: 10px; background: #28a745; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
-                    Test White Warm
-                </button>
-                <button onclick="testWhiteCool()" 
-                        style="padding: 10px; background: #17a2b8; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
-                    Test White Cool
-                </button>
-            </div>
-            <button onclick="logDeviceMethods()" 
-                    style="width: 100%; padding: 10px; background: #ffc107; color: #333; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
-                Show Available Functions
-            </button>
-        </div>
-
-        <div class="control-section">
             <div class="control-title">Animation Speed</div>
             <div class="slider-label">
                 <span>Speed</span>
@@ -212,29 +201,8 @@
     <script type="module">
         import { BluetoothLedStrip } from './BluetoothLedStrip.js';
 
-        let device = null, isConnected = false;
-        let commandQueue = [], isProcessingQueue = false;
-
-        function queueCommand(commandFunc, logMessage) {
-            commandQueue.push({ func: commandFunc, log: logMessage });
-            processQueue();
-        }
-
-        async function processQueue() {
-            if (isProcessingQueue || commandQueue.length === 0) return;
-            isProcessingQueue = true;
-            while (commandQueue.length > 0) {
-                const { func, log } = commandQueue.shift();
-                try {
-                    func();
-                    if (log) logCommand(log);
-                    await new Promise(resolve => setTimeout(resolve, 50));
-                } catch (error) {
-                    logCommand(`Error: ${error}`);
-                }
-            }
-            isProcessingQueue = false;
-        }
+        let device = null;
+        let isConnected = false;
 
         function logCommand(command) {
             const log = document.getElementById('commandLog');
@@ -256,7 +224,7 @@
             
             let details = `Name: ${dev.name || 'Unknown'}<br>`;
             details += `ID: ${dev.id || 'Unknown'}<br>`;
-            if (dev.device && dev.device.id) details += `BLE ID: ${dev.device.id}<br>`;
+            if (device.deviceType) details += `Type: ${device.deviceType}<br>`;
             
             deviceDetails.innerHTML = details;
         }
@@ -274,7 +242,7 @@
 
         function onError(exception) {
             logCommand('ERROR: ' + exception);
-            alert('Error: ' + exception);
+            console.error('Device error:', exception);
         }
 
         window.toggleConnection = async function() {
@@ -290,12 +258,44 @@
                 try {
                     if (device && device.device && device.device.gatt) {
                         device.device.gatt.disconnect();
-                        logCommand('Disconnect initiated');
                     }
                 } catch (error) {
                     logCommand('Disconnect error: ' + error);
                 }
                 onDisconnect({ name: document.getElementById('deviceName').textContent });
+            }
+        }
+
+        // Helper function to send white temperature packet
+        async function sendWhitePacket(temperature, brightness) {
+            if (!device || !device.characteristic) {
+                logCommand('ERROR: Device not connected');
+                return;
+            }
+
+            try {
+                const packet = new Uint8Array([
+                    0x00, 0x10, 0x80, 0x00, 0x00, 0x0d, 0x0e, 0x0b,
+                    0x3b, 0xb1, 0x00, 0x00, 0x00,
+                    Math.round(temperature),  // byte 13: 0-100
+                    Math.round(brightness),   // byte 14: 0-100
+                    0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x00 // checksum placeholder
+                ]);
+                
+                // Calculate checksum
+                let sum = 0;
+                for (let i = 9; i < packet.length - 1; i++) {
+                    sum += packet[i];
+                }
+                packet[20] = sum & 0xFF;
+                
+                await device.characteristic.writeValue(packet);
+                logCommand(`WHITE: temp=${temperature}, bright=${brightness}, checksum=${packet[20]}`);
+                return true;
+            } catch (error) {
+                logCommand(`White packet error: ${error}`);
+                return false;
             }
         }
 
@@ -341,70 +341,62 @@
                 `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
         }
 
+        // Test functions
+        window.testWhiteWarm = async function() {
+            if (!isConnected) {
+                alert('Please connect first');
+                return;
+            }
+            logCommand('=== TESTING WARM WHITE ===');
+            await sendWhitePacket(0, 100); // 0 = warm, 100% brightness
+        }
+
+        window.testWhiteCool = async function() {
+            if (!isConnected) {
+                alert('Please connect first');
+                return;
+            }
+            logCommand('=== TESTING COOL WHITE ===');
+            await sendWhitePacket(100, 100); // 100 = cool, 100% brightness
+        }
+
+        // Temperature slider
         const tempSlider = document.getElementById('temperatureSlider');
-        tempSlider.addEventListener('input', function() {
+        tempSlider.addEventListener('input', async function() {
             const percent = parseInt(this.value);
             updateTemperaturePreview(percent);
             
-            if (device && isConnected) {
-                const onBtn = document.getElementById('onBtn');
-                if (!onBtn.classList.contains('active')) {
-                    queueCommand(() => device.setSwitch(1), `setSwitch(1) - auto-on`);
-                    onBtn.classList.add('active');
-                    document.getElementById('offBtn').classList.remove('active');
-                }
-                
-                // Send WHITE TEMPERATURE packet (for deviceType=2)
-                const temperature = percent; // 0-100
+            if (isConnected) {
                 const brightness = parseInt(document.getElementById('brightnessSlider').value);
-                
-                queueCommand(() => {
-                    try {
-                        const packet = new Uint8Array([
-                            0x00, 0x10, 0x80, 0x00, 0x00, 0x0d, 0x0e, 0x0b,
-                            0x3b, 0xb1, 0x00, 0x00, 0x00,
-                            temperature,  // byte 13
-                            brightness,   // byte 14
-                            0x00, 0x00, 0x00, 0x00, 0x00,
-                            0x00 // checksum placeholder
-                        ]);
-                        
-                        // Calculate checksum
-                        let sum = 0;
-                        for (let i = 9; i < packet.length - 1; i++) {
-                            sum += packet[i];
-                        }
-                        packet[20] = sum & 0xFF;
-                        
-                        device.characteristic.writeValue(packet);
-                    } catch (error) {
-                        logCommand(`White temp error: ${error}`);
-                    }
-                }, `setWhiteTemp(${temperature}, ${brightness}) = ${percentToKelvin(percent)}K`);
+                await sendWhitePacket(percent, brightness);
             }
         });
 
+        // Brightness slider
         const brightnessSlider = document.getElementById('brightnessSlider');
         brightnessSlider.addEventListener('input', function() {
             const value = parseInt(this.value);
             document.getElementById('brightnessValue').textContent = value;
             
             if (device && isConnected) {
-                const onBtn = document.getElementById('onBtn');
-                if (!onBtn.classList.contains('active')) setPower(1);
-                queueCommand(() => device.setBrightness(value), `setBrightness(${value})`);
+                device.setBrightness(value);
+                logCommand(`setBrightness(${value})`);
             }
         });
 
+        // Speed slider
         const speedSlider = document.getElementById('speedSlider');
         speedSlider.addEventListener('input', function() {
             const value = parseInt(this.value);
             document.getElementById('speedValue').textContent = value;
+            
             if (device && isConnected) {
-                queueCommand(() => device.setSpeed(value), `setSpeed(${value})`);
+                device.setSpeed(value);
+                logCommand(`setSpeed(${value})`);
             }
         });
 
+        // Power switch
         window.setPower = function(state) {
             const offBtn = document.getElementById('offBtn');
             const onBtn = document.getElementById('onBtn');
@@ -418,10 +410,12 @@
             }
             
             if (device && isConnected) {
-                queueCommand(() => device.setSwitch(state), `setSwitch(${state})`);
+                device.setSwitch(state);
+                logCommand(`setSwitch(${state})`);
             }
         }
 
+        // Mode selection
         window.setMode = function(mode) {
             const buttons = document.querySelectorAll('.mode-btn');
             buttons.forEach((btn) => {
@@ -434,7 +428,8 @@
             });
             
             if (device && isConnected) {
-                queueCommand(() => device.setMode(mode), `setMode(${mode})`);
+                device.setMode(mode);
+                logCommand(`setMode(${mode})`);
             }
         }
 
@@ -444,114 +439,12 @@
             
             if (mode >= 1 && mode <= 113) {
                 setMode(mode);
-                logCommand(`Testing custom mode: ${mode}`);
             } else {
                 alert('Please enter a mode number between 1 and 113');
             }
         }
 
-        // Diagnostic functions
-        window.testWhiteCommand = function() {
-            if (!device || !isConnected) {
-                alert('Please connect to device first');
-                return;
-            }
-            
-            logCommand('=== Testing WHITE TEMPERATURE packet (WARM) ===');
-            
-            // Test the actual LEDnetWF white command packet
-            // This is what deviceType=2 needs instead of RGB
-            try {
-                const temperature = 0;  // 0 = warm white
-                const brightness = 100; // 100% brightness
-                
-                const packet = new Uint8Array([
-                    0x00, 0x10, 0x80, 0x00, 0x00, 0x0d, 0x0e, 0x0b,
-                    0x3b, 0xb1, 0x00, 0x00, 0x00,
-                    temperature,  // byte 13
-                    brightness,   // byte 14
-                    0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00 // checksum placeholder
-                ]);
-                
-                // Calculate checksum
-                let sum = 0;
-                for (let i = 9; i < packet.length - 1; i++) {
-                    sum += packet[i];
-                }
-                packet[20] = sum & 0xFF;
-                
-                device.characteristic.writeValue(packet);
-                logCommand(`Sent WHITE packet: temp=${temperature}, bright=${brightness}, checksum=${packet[20]}`);
-            } catch (error) {
-                logCommand(`Error sending white packet: ${error}`);
-            }
-        }
-
-        window.testWhiteCool = function() {
-            if (!device || !isConnected) {
-                alert('Please connect to device first');
-                return;
-            }
-            
-            logCommand('=== Testing WHITE TEMPERATURE packet (COOL) ===');
-            
-            try {
-                const temperature = 100;  // 100 = cool white
-                const brightness = 100;   // 100% brightness
-                
-                const packet = new Uint8Array([
-                    0x00, 0x10, 0x80, 0x00, 0x00, 0x0d, 0x0e, 0x0b,
-                    0x3b, 0xb1, 0x00, 0x00, 0x00,
-                    temperature,  // byte 13
-                    brightness,   // byte 14
-                    0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00 // checksum placeholder
-                ]);
-                
-                // Calculate checksum
-                let sum = 0;
-                for (let i = 9; i < packet.length - 1; i++) {
-                    sum += packet[i];
-                }
-                packet[20] = sum & 0xFF;
-                
-                device.characteristic.writeValue(packet);
-                logCommand(`Sent WHITE packet: temp=${temperature}, bright=${brightness}, checksum=${packet[20]}`);
-            } catch (error) {
-                logCommand(`Error sending white packet: ${error}`);
-            }
-        }
-
-        window.logDeviceMethods = function() {
-            if (!device || !isConnected) {
-                alert('Please connect to device first');
-                return;
-            }
-            
-            logCommand('=== Device Object Analysis ===');
-            logCommand('Available methods on device:');
-            
-            for (let prop in device) {
-                if (typeof device[prop] === 'function') {
-                    logCommand(`  - device.${prop}()`);
-                }
-            }
-            
-            logCommand('Device properties:');
-            for (let prop in device) {
-                if (typeof device[prop] !== 'function') {
-                    logCommand(`  - device.${prop} = ${device[prop]}`);
-                }
-            }
-            
-            if (device.device) {
-                logCommand('Underlying BLE device available: YES');
-                logCommand(`  Device name: ${device.device.name}`);
-                logCommand(`  Device ID: ${device.device.id}`);
-            }
-        }
-
+        // Initialize
         updateTemperaturePreview(50);
     </script>
 </body>
