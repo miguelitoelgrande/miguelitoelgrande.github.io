@@ -411,7 +411,7 @@
         <div class="control-section">
             <div class="control-title">Light Mode</div>
             <div style="font-size: 12px; color: #666; margin-bottom: 10px;">
-                LEDnetWF has 113 modes (1-113). Experiment to find your favorites!
+                LEDnetWF has 113 modes (1-113). Use <strong>Manual (97)</strong> for color wheel/temp control. Experiment to find your favorites!
             </div>
             <div class="mode-grid">
                 <button class="mode-btn active" onclick="setMode(97)">Manual</button>
@@ -633,16 +633,7 @@
                     document.getElementById('offBtn').classList.remove('active');
                 }
                 
-                // For LEDnetWF, mode 97 appears to be manual/static color mode
-                // Set mode to 97 for manual color control (LEDnetWF protocol)
-                const modeButtons = document.querySelectorAll('.mode-btn');
-                if (!modeButtons[0].classList.contains('active')) {
-                    queueCommand(() => device.setMode(97), `setMode(97) - manual color mode for LEDnetWF`);
-                    modeButtons.forEach((btn, index) => {
-                        btn.classList.toggle('active', index === 0);
-                    });
-                }
-                
+                // Just send RGB without changing mode - let user control mode manually
                 queueCommand(() => device.setRGB(r, g, b), `setRGB(${r}, ${g}, ${b})`);
             }
         }
