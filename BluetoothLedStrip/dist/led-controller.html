@@ -386,40 +386,12 @@
             Connect to LED Strip
         </button>
 
-        <!-- Color Control -->
+        <!-- Power Switch -->
         <div class="control-section">
-            <div class="control-title">Color Control</div>
-            <div class="color-picker-container">
-                <div class="color-wheel" id="colorWheel"></div>
-                <div class="color-display" id="colorDisplay"></div>
-                <div class="rgb-values">
-                    <div class="rgb-value">
-                        <div class="rgb-label" style="color: #ff0000;">R</div>
-                        <div class="rgb-number" id="redValue">255</div>
-                    </div>
-                    <div class="rgb-value">
-                        <div class="rgb-label" style="color: #00ff00;">G</div>
-                        <div class="rgb-number" id="greenValue">0</div>
-                    </div>
-                    <div class="rgb-value">
-                        <div class="rgb-label" style="color: #0000ff;">B</div>
-                        <div class="rgb-number" id="blueValue">0</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Color Temperature -->
-        <div class="control-section">
-            <div class="control-title">Color Temperature</div>
-            <div class="slider-container">
-                <div class="temperature-gradient"></div>
-                <input type="range" id="temperatureSlider" min="2700" max="6500" value="4000" step="100">
-                <div class="slider-label">
-                    <span>Warm</span>
-                    <span class="slider-value"><span id="temperatureValue">4000</span>K</span>
-                    <span>Cool</span>
-                </div>
+            <div class="control-title">Power</div>
+            <div class="switch-container">
+                <button class="switch-btn" id="offBtn" onclick="setPower(0)">OFF</button>
+                <button class="switch-btn active" id="onBtn" onclick="setPower(1)">ON</button>
             </div>
         </div>
 
@@ -429,18 +401,9 @@
             <div class="slider-container">
                 <div class="slider-label">
                     <span>Brightness</span>
-                    <span class="slider-value"><span id="brightnessValue">50</span>%</span>
+                    <span class="slider-value"><span id="brightnessValue">100</span>%</span>
                 </div>
-                <input type="range" id="brightnessSlider" min="0" max="100" value="50">
-            </div>
-        </div>
-
-        <!-- Power Switch -->
-        <div class="control-section">
-            <div class="control-title">Power</div>
-            <div class="switch-container">
-                <button class="switch-btn" id="offBtn" onclick="setPower(0)">OFF</button>
-                <button class="switch-btn active" id="onBtn" onclick="setPower(1)">ON</button>
+                <input type="range" id="brightnessSlider" min="1" max="100" value="100">
             </div>
         </div>
 
@@ -468,6 +431,43 @@
                 <input type="range" id="speedSlider" min="0" max="100" value="50">
             </div>
         </div>
+
+        <!-- Color Temperature -->
+        <div class="control-section">
+            <div class="control-title">Color Temperature</div>
+            <div class="slider-container">
+                <div class="temperature-gradient"></div>
+                <input type="range" id="temperatureSlider" min="2700" max="6500" value="4000" step="100">
+                <div class="slider-label">
+                    <span>Warm</span>
+                    <span class="slider-value"><span id="temperatureValue">4000</span>K</span>
+                    <span>Cool</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Color Control -->
+        <div class="control-section">
+            <div class="control-title">Color Control</div>
+            <div class="color-picker-container">
+                <div class="color-wheel" id="colorWheel"></div>
+                <div class="color-display" id="colorDisplay"></div>
+                <div class="rgb-values">
+                    <div class="rgb-value">
+                        <div class="rgb-label" style="color: #ff0000;">R</div>
+                        <div class="rgb-number" id="redValue">255</div>
+                    </div>
+                    <div class="rgb-value">
+                        <div class="rgb-label" style="color: #00ff00;">G</div>
+                        <div class="rgb-number" id="greenValue">0</div>
+                    </div>
+                    <div class="rgb-value">
+                        <div class="rgb-label" style="color: #0000ff;">B</div>
+                        <div class="rgb-number" id="blueValue">0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script type="module" src="./BluetoothLedStrip.js"></script>
@@ -478,6 +478,7 @@
         let device = null;
         let isConnected = false;
         let currentRGB = { r: 255, g: 0, b: 0 };
+        let gattServer = null;
 
         // Logging function
         function logCommand(command) {
@@ -498,6 +499,7 @@
 
         function onDisconnect(dev) {
             isConnected = false;
+            device = null;
             document.getElementById('connectionStatus').textContent = 'Disconnected';
             document.getElementById('deviceName').textContent = 'None';
             document.getElementById('statusIndicator').className = 'status-indicator status-disconnected';
@@ -513,13 +515,25 @@
         // Toggle connection
         window.toggleConnection = async function() {
             if (!isConnected) {
-                device = new BluetoothLedStrip.Device();
-                device.connect(onConnect, onDisconnect, onError);
-            } else {
-                if (device) {
-                    // Disconnect functionality would go here if available in the library
-                    logCommand('Disconnect requested');
+                try {
+                    device = new BluetoothLedStrip.Device();
+                    device.connect(onConnect, onDisconnect, onError);
+                } catch (error) {
+                    logCommand('Connection failed: ' + error);
+                    onError(error);
                 }
+            } else {
+                // Disconnect by accessing the underlying Bluetooth device
+                try {
+                    if (device && device.device && device.device.gatt) {
+                        device.device.gatt.disconnect();
+                        logCommand('Disconnect initiated');
+                    }
+                } catch (error) {
+                    logCommand('Disconnect error: ' + error);
+                }
+                // Force UI update
+                onDisconnect({ name: document.getElementById('deviceName').textContent });
             }
         }
 
@@ -628,6 +642,11 @@
             document.getElementById('brightnessValue').textContent = value;
             
             if (device && isConnected) {
+                // Ensure power is on when adjusting brightness
+                const onBtn = document.getElementById('onBtn');
+                if (!onBtn.classList.contains('active')) {
+                    setPower(1);
+                }
                 device.setBrightness(value);
                 logCommand(`setBrightness(${value})`);
             }
