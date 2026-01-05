@@ -1,282 +1,236 @@
-/**
- * BluetoothLedStrip.js - Enhanced Version with White LED Support
- * 
- * Supports both RGB and White (CCT) LED strips using LEDnetWF protocol
- * Based on protocol analysis from https://github.com/8none1/zengge_lednetwf
- */
-
-export const BluetoothLedStrip = (function() {
-    'use strict';
-
-    const LEDNETWF_SERVICE_UUID = '0000fff0-0000-1000-8000-00805f9b34fb';
-    const LEDNETWF_CHAR_UUID = '0000fff1-0000-1000-8000-00805f9b34fb';
-
-    /**
-     * LEDnetWF Mode Constants
-     */
-    const MODES = {
-        MANUAL: 97,        // For manual RGB or white temperature control
-        JUMP_RGB: 1,       // Quick color changes
-        FADE: 38,          // Smooth color transitions
-        RAINBOW: 50,       // Rainbow effect
-        STROBE: 80,        // Strobe/flash effect
-        WAVE: 100          // Wave pattern
-    };
-
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+export var BluetoothLedStrip;
+(function (BluetoothLedStrip) {
+    let Method;
+    (function (Method) {
+        Method[Method["RGB"] = 3] = "RGB";
+        Method[Method["SWITCH"] = 4] = "SWITCH";
+        Method[Method["MODE"] = 7] = "MODE";
+        Method[Method["BRIGHTNESS"] = 8] = "BRIGHTNESS";
+        Method[Method["SPEED"] = 9] = "SPEED";
+    })(Method = BluetoothLedStrip.Method || (BluetoothLedStrip.Method = {}));
+    ;
+    let DeviceType;
+    (function (DeviceType) {
+        DeviceType[DeviceType["UNKNOWN"] = 0] = "UNKNOWN";
+        DeviceType[DeviceType["MAGIC_STRIP"] = 1] = "MAGIC_STRIP";
+        DeviceType[DeviceType["LED_NET_WF"] = 2] = "LED_NET_WF";
+        DeviceType[DeviceType["KEEP_SMILE"] = 3] = "KEEP_SMILE";
+    })(DeviceType = BluetoothLedStrip.DeviceType || (BluetoothLedStrip.DeviceType = {}));
+    ;
+    const guidServiceMagicStrip = '0000fff0-0000-1000-8000-00805f9b34fb';
+    const guidCharacteristicMagicStrip = '0000fff1-0000-1000-8000-00805f9b34fb';
+    const guidServiceLedNetWf = '0000ffff-0000-1000-8000-00805f9b34fb';
+    const guidCharacteristicLedNetWf = '0000ff01-0000-1000-8000-00805f9b34fb';
+    const guidServiceKeepsmile = '0000afd0-0000-1000-8000-00805f9b34fb';
+    const guidCharacteristicKeepsmile = '0000afd1-0000-1000-8000-00805f9b34fb';
     class Device {
         constructor() {
-            this.device = null;
-            this.characteristic = null;
-            this.onConnectCallback = null;
-            this.onDisconnectCallback = null;
-            this.onErrorCallback = null;
+            this.deviceType = DeviceType.UNKNOWN;
+            this.counter = 0;
+            this.lastMode = 1;
+            this.lastBrightness = 100;
+            this.lastSpeed = 100;
+            this.characteristic = undefined;
+            this.onError = undefined;
+            this.onConnect = undefined;
+            this.onDisconnect = undefined;
         }
-
-        /**
-         * Calculate checksum for LEDnetWF packets
-         * @private
-         */
-        _calculateChecksum(packet) {
-            let sum = 0;
-            for (let i = 9; i < packet.length - 1; i++) {
-                sum += packet[i];
-            }
-            return sum & 0xFF;
-        }
-
-        /**
-         * Write packet to device with error handling
-         * @private
-         */
-        async _writePacket(packet) {
-            try {
-                if (!this.characteristic) {
-                    throw new Error('Device not connected');
-                }
-                await this.characteristic.writeValue(packet);
-                return true;
-            } catch (error) {
-                if (this.onErrorCallback) {
-                    this.onErrorCallback(error);
-                }
-                throw error;
-            }
-        }
-
-        /**
-         * Connect to LED strip device
-         */
-        async connect(onConnect, onDisconnect, onError) {
-            this.onConnectCallback = onConnect;
-            this.onDisconnectCallback = onDisconnect;
-            this.onErrorCallback = onError;
-
-            try {
-                // Request device
-                this.device = await navigator.bluetooth.requestDevice({
-                    filters: [{ services: [LEDNETWF_SERVICE_UUID] }]
-                });
-
-                // Connect to GATT server
-                const server = await this.device.gatt.connect();
-                
-                // Get service
-                const service = await server.getPrimaryService(LEDNETWF_SERVICE_UUID);
-                
-                // Get characteristic
-                this.characteristic = await service.getCharacteristic(LEDNETWF_CHAR_UUID);
-
-                // Setup disconnect handler
-                this.device.addEventListener('gattserverdisconnected', () => {
-                    if (this.onDisconnectCallback) {
-                        this.onDisconnectCallback(this.device);
+        connect(onConnect, onDisconnect, onError) {
+            return __awaiter(this, void 0, void 0, function* () {
+                // save callback function
+                this.onConnect = onConnect;
+                this.onDisconnect = onDisconnect;
+                this.onError = onError;
+                try {
+                    // select device which supports the service
+                    const options = { filters: [{ services: [guidServiceMagicStrip] },
+                            { namePrefix: 'LEDnetWF' },
+                            { namePrefix: 'KS03' }
+                        ],
+                        optionalServices: [guidServiceLedNetWf, guidServiceKeepsmile] };
+                    const device = yield window.navigator.bluetooth.requestDevice(options);
+                    if (device != undefined)
+                        console.log('Selected device: ' + device.name + ', Connected: ' + device.gatt.connected);
+                    // register device disconnect event
+                    device === null || device === void 0 ? void 0 : device.addEventListener('gattserverdisconnected', this.onDisconnected);
+                    if (device != undefined)
+                        device.bluetoothLedStripDevice = this;
+                    // connect to device
+                    const server = yield (device === null || device === void 0 ? void 0 : device.gatt.connect());
+                    // get service
+                    var service = undefined;
+                    try {
+                        //
+                        // DeviceType.MAGIC_STRIP
+                        //
+                        var service = yield (server === null || server === void 0 ? void 0 : server.getPrimaryService(guidServiceMagicStrip));
+                        this.deviceType = DeviceType.MAGIC_STRIP;
+                        // get characteristic
+                        this.characteristic = yield (service === null || service === void 0 ? void 0 : service.getCharacteristic(guidCharacteristicMagicStrip));
                     }
+                    catch (exception) {
+                        try {
+                            //
+                            // DeviceType.LED_NET_WF
+                            //
+                            service = yield (server === null || server === void 0 ? void 0 : server.getPrimaryService(guidServiceLedNetWf));
+                            this.deviceType = DeviceType.LED_NET_WF;
+                            // get characteristic
+                            this.characteristic = yield (service === null || service === void 0 ? void 0 : service.getCharacteristic(guidCharacteristicLedNetWf));
+                        }
+                        catch (exception) {
+                            //
+                            // DeviceType.KEEP_SMILE
+                            //
+                            service = yield (server === null || server === void 0 ? void 0 : server.getPrimaryService(guidServiceKeepsmile));
+                            this.deviceType = DeviceType.KEEP_SMILE;
+                            // get characteristic
+                            this.characteristic = yield (service === null || service === void 0 ? void 0 : service.getCharacteristic(guidCharacteristicKeepsmile));
+                        }
+                    }
+                    // call connect callback
+                    if (device != undefined)
+                        if (this.onConnect != undefined)
+                            this.onConnect(device);
+                }
+                catch (exception) {
+                    console.log(exception);
+                    if (this.onError != undefined)
+                        this.onError(exception);
+                }
+            });
+        }
+        sendMagicStrip(method, data) {
+            if (this.characteristic == undefined)
+                return;
+            try {
+                // send byte stream to characteristic
+                this.characteristic.writeValueWithoutResponse(new Uint8Array([method, ...data])).then((_) => {
                 });
-
-                // Call connect callback
-                if (this.onConnectCallback) {
-                    this.onConnectCallback(this.device);
-                }
-
-            } catch (error) {
-                if (this.onErrorCallback) {
-                    this.onErrorCallback(error);
-                }
-                throw error;
+            }
+            catch (exception) {
+                console.log(exception);
             }
         }
-
-        /**
-         * Disconnect from device
-         */
-        disconnect() {
-            if (this.device && this.device.gatt.connected) {
-                this.device.gatt.disconnect();
+        sendLedNetWf(magic, data) {
+            if (this.characteristic == undefined)
+                return;
+            try {
+                // based on https://github.com/8none1/zengge_lednetwf
+                const checksum = 0;
+                this.counter++;
+                const length = magic.length + data.length;
+                const packet = new Uint8Array([((this.counter >> 8) & 0xFF),
+                    (this.counter & 0xFF),
+                    ...[0x80, 0x00, 0x00],
+                    length,
+                    (length + 1),
+                    ...Uint8Array.from(magic),
+                    ...data,
+                    checksum]);
+                // send byte stream to characteristic
+                this.characteristic.writeValueWithoutResponse(packet).then((_) => {
+                });
+            }
+            catch (exception) {
+                console.log(exception);
             }
         }
-
-        /**
-         * Set RGB color (0-255 each)
-         * @param {number} red - Red value 0-255
-         * @param {number} green - Green value 0-255
-         * @param {number} blue - Blue value 0-255
-         */
-        async setRGB(red, green, blue) {
-            red = Math.max(0, Math.min(255, Math.round(red)));
-            green = Math.max(0, Math.min(255, Math.round(green)));
-            blue = Math.max(0, Math.min(255, Math.round(blue)));
-
-            const packet = new Uint8Array([
-                0x00, 0x05, 0x80, 0x00, 0x00, 0x0d, 0x0e, 0x0b,
-                0x3b, 0xa1, red, green, blue, 0x00, 0x00, 0x00,
-                0x00, 0x00, 0x00, 0x00, 0x00
-            ]);
-
-            packet[20] = this._calculateChecksum(packet);
-            return await this._writePacket(packet);
+        // based on https://github.com/themooer1/cheshire/blob/master/cheshire/hal/compilers/ks03_new/platform_commands.py
+        sendKeepsmile(data) {
+            if (this.characteristic == undefined)
+                return;
+            try {
+                // send byte stream to characteristic
+                this.characteristic.writeValueWithoutResponse(new Uint8Array([...data])).then((_) => {
+                });
+            }
+            catch (exception) {
+                console.log(exception);
+            }
         }
-
-        /**
-         * Set white LED temperature and brightness
-         * @param {number} temperature - Color temperature 0-100 (0=warm/2700K, 100=cool/6500K)
-         * @param {number} brightness - Brightness level 0-100
-         */
-        async setWhiteTemperature(temperature, brightness) {
-            temperature = Math.max(0, Math.min(100, Math.round(temperature)));
-            brightness = Math.max(0, Math.min(100, Math.round(brightness)));
-
-            const packet = new Uint8Array([
-                0x00, 0x10, 0x80, 0x00, 0x00, 0x0d, 0x0e, 0x0b,
-                0x3b, 0xb1, 0x00, 0x00, 0x00,
-                temperature,  // byte 13
-                brightness,   // byte 14
-                0x00, 0x00, 0x00, 0x00, 0x00,
-                0x00 // checksum placeholder
-            ]);
-
-            packet[20] = this._calculateChecksum(packet);
-            return await this._writePacket(packet);
+        // connvert rgb to hsv
+        // based on https://stackoverflow.com/a/54070620
+        // due to unknown reason, red and green must be swapped
+        // Hue is divided by two to fit in to a single byte, Saturation and Value are percentages from 0 to 100
+        rgb2hsv(red, green, blue) {
+            red /= 255;
+            green /= 255;
+            blue /= 255;
+            let v = Math.max(red, green, blue);
+            let c = v - Math.min(red, green, blue);
+            let h = c && ((v == green) ? (red - blue) / c : ((v == red) ? 2 + (blue - green) / c : 4 + (green - red) / c));
+            return [(60 * (h < 0 ? h + 6 : h)) / 2, (v && c / v) * 100, v * 100];
         }
-
-        /**
-         * Set white LED using Kelvin temperature
-         * @param {number} kelvin - Color temperature in Kelvin (2700-6500)
-         * @param {number} brightness - Brightness level 0-100
-         */
-        async setWhiteKelvin(kelvin, brightness) {
-            kelvin = Math.max(2700, Math.min(6500, kelvin));
-            const temperature = ((kelvin - 2700) / (6500 - 2700)) * 100;
-            return await this.setWhiteTemperature(temperature, brightness);
+        // set rgb value
+        setRGB(red, green, blue) {
+            if (this.deviceType == DeviceType.MAGIC_STRIP)
+                this.sendMagicStrip(Method.RGB, new Uint8Array([red, green, blue]));
+            else if (this.deviceType == DeviceType.LED_NET_WF) {
+                const hsv = this.rgb2hsv(red, green, blue);
+                this.sendLedNetWf([0x0B, 0x3B], new Uint8Array([0xA1, ...Uint8Array.from(hsv), ...new Uint8Array(7)]));
+            }
+            else if (this.deviceType == DeviceType.KEEP_SMILE)
+                this.sendKeepsmile(new Uint8Array([0x5A, 0x00, 0x01, red, green, blue, 0x00, this.lastBrightness, 0x00, 0xA5]));
         }
-
-        /**
-         * Set warm white LED level (2700K)
-         * @param {number} level - Brightness 0-100
-         */
-        async setWarmWhite(level) {
-            return await this.setWhiteTemperature(0, level);
+        // set switch
+        setSwitch(switchBoolean) {
+            if (this.deviceType == DeviceType.MAGIC_STRIP)
+                this.sendMagicStrip(Method.SWITCH, new Uint8Array([switchBoolean]));
+            else if (this.deviceType == DeviceType.LED_NET_WF)
+                this.sendLedNetWf([0x0B, 0x3B], new Uint8Array([((switchBoolean > 0) ? 0x23 : 0x24), ...new Uint8Array(10)]));
+            else if (this.deviceType == DeviceType.KEEP_SMILE)
+                this.sendKeepsmile(new Uint8Array([0x5B, ((switchBoolean > 0) ? 0xF0 : 0x0F), 0x00, 0xB5]));
         }
-
-        /**
-         * Set cool white LED level (6500K)
-         * @param {number} level - Brightness 0-100
-         */
-        async setCoolWhite(level) {
-            return await this.setWhiteTemperature(100, level);
+        // set mode
+        setMode(mode) {
+            this.lastMode = mode;
+            if (this.deviceType == DeviceType.MAGIC_STRIP)
+                this.sendMagicStrip(Method.MODE, new Uint8Array([mode]));
+            else if (this.deviceType == DeviceType.LED_NET_WF)
+                this.sendLedNetWf([0x0B, 0x38], new Uint8Array([this.lastMode, this.lastSpeed, this.lastBrightness]));
+            else if (this.deviceType == DeviceType.KEEP_SMILE)
+                this.sendKeepsmile(new Uint8Array([0x5C, 0x00, (this.lastMode + 128), this.lastSpeed, this.lastBrightness, 0x00, 0xC5]));
         }
-
-        /**
-         * Set neutral white (4600K)
-         * @param {number} level - Brightness 0-100
-         */
-        async setNeutralWhite(level) {
-            return await this.setWhiteTemperature(50, level);
+        // set brightness
+        setBrightness(brightness) {
+            this.lastBrightness = brightness;
+            if (this.deviceType == DeviceType.MAGIC_STRIP)
+                this.sendMagicStrip(Method.BRIGHTNESS, new Uint8Array([brightness]));
+            else if (this.deviceType == DeviceType.LED_NET_WF)
+                this.sendLedNetWf([0x0B, 0x38], new Uint8Array([this.lastMode, this.lastSpeed, this.lastBrightness]));
+            else if (this.deviceType == DeviceType.KEEP_SMILE)
+                this.sendKeepsmile(new Uint8Array([0x5C, 0x00, (this.lastMode + 128), this.lastSpeed, this.lastBrightness, 0x00, 0xC5]));
         }
-
-        /**
-         * Set overall brightness (0-100 for LEDnetWF)
-         * @param {number} value - Brightness 0-100
-         */
-        async setBrightness(value) {
-            value = Math.max(0, Math.min(100, Math.round(value)));
-
-            const packet = new Uint8Array([
-                0x00, 0x06, 0x80, 0x00, 0x00, 0x0d, 0x0e, 0x0b,
-                0x3b, 0x34, value, 0x00, 0x00, 0x00, 0x00, 0x00,
-                0x00, 0x00, 0x00, 0x00, 0x00
-            ]);
-
-            packet[20] = this._calculateChecksum(packet);
-            return await this._writePacket(packet);
+        // set speed
+        setSpeed(speed) {
+            this.lastSpeed = speed;
+            if (this.deviceType == DeviceType.MAGIC_STRIP)
+                this.sendMagicStrip(Method.SPEED, new Uint8Array([speed]));
+            else if (this.deviceType == DeviceType.LED_NET_WF)
+                this.sendLedNetWf([0x0B, 0x38], new Uint8Array([this.lastMode, this.lastSpeed, this.lastBrightness]));
+            else if (this.deviceType == DeviceType.KEEP_SMILE)
+                this.sendKeepsmile(new Uint8Array([0x5C, 0x00, (this.lastMode + 128), this.lastSpeed, this.lastBrightness, 0x00, 0xC5]));
         }
-
-        /**
-         * Toggle power on/off
-         * @param {number} value - 0=off, 1=on
-         */
-        async setSwitch(value) {
-            const isOn = value ? 0x23 : 0x24;
-
-            const packet = new Uint8Array([
-                0x00, value ? 0x04 : 0x5b, 0x80, 0x00, 0x00, 0x0d, 0x0e, 0x0b,
-                0x3b, isOn, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                0x00, 0x32, 0x00, 0x00, 0x00
-            ]);
-
-            packet[20] = this._calculateChecksum(packet);
-            return await this._writePacket(packet);
-        }
-
-        /**
-         * Set animation mode (1-113 for LEDnetWF)
-         * @param {number} mode - Mode number (use MODES constants or 1-113)
-         */
-        async setMode(mode) {
-            mode = Math.max(1, Math.min(113, Math.round(mode)));
-
-            const packet = new Uint8Array([
-                0x00, 0x07, 0x80, 0x00, 0x00, 0x0d, 0x0e, 0x0b,
-                0x3b, 0x2c, mode, 0x00, 0x00, 0x00, 0x00, 0x00,
-                0x00, 0x00, 0x00, 0x00, 0x00
-            ]);
-
-            packet[20] = this._calculateChecksum(packet);
-            return await this._writePacket(packet);
-        }
-
-        /**
-         * Set animation speed (0-100 for LEDnetWF, 0=slowest, 100=fastest)
-         * @param {number} value - Speed 0-100
-         */
-        async setSpeed(value) {
-            value = Math.max(0, Math.min(100, Math.round(value)));
-
-            const packet = new Uint8Array([
-                0x00, 0x08, 0x80, 0x00, 0x00, 0x0d, 0x0e, 0x0b,
-                0x3b, 0x2b, value, 0x00, 0x00, 0x00, 0x00, 0x00,
-                0x00, 0x00, 0x00, 0x00, 0x00
-            ]);
-
-            packet[20] = this._calculateChecksum(packet);
-            return await this._writePacket(packet);
-        }
-
-        /**
-         * Query device settings (experimental)
-         * @returns {Promise} Promise that resolves when query is sent
-         */
-        async queryDeviceSettings() {
-            const packet = new Uint8Array([
-                0x00, 0x02, 0x80, 0x00, 0x00, 0x05, 0x06, 0x0a,
-                0x63, 0x12, 0x21, 0xf0, 0x86
-            ]);
-
-            return await this._writePacket(packet);
+        // device disconnect event callback
+        onDisconnected(event) {
+            const device = event.target;
+            console.log(`Device ${device === null || device === void 0 ? void 0 : device.name} is disconnected.`);
+            // call disconnect callback
+            if (device != undefined)
+                if (device.bluetoothLedStripDevice.onDisconnect != undefined)
+                    device.bluetoothLedStripDevice.onDisconnect(device);
         }
     }
-
-    return {
-        Device: Device,
-        MODES: MODES
-    };
-})();
+    BluetoothLedStrip.Device = Device;
+})(BluetoothLedStrip || (BluetoothLedStrip = {}));
+//# sourceMappingURL=BluetoothLedStrip.js.map
