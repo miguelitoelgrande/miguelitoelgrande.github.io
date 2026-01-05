@@ -411,12 +411,12 @@
         <div class="control-section">
             <div class="control-title">Light Mode</div>
             <div class="mode-grid">
-                <button class="mode-btn active" onclick="setMode(0)">Static</button>
-                <button class="mode-btn" onclick="setMode(1)">Fade</button>
-                <button class="mode-btn" onclick="setMode(2)">Pulse</button>
-                <button class="mode-btn" onclick="setMode(3)">Flash</button>
-                <button class="mode-btn" onclick="setMode(4)">Rainbow</button>
-                <button class="mode-btn" onclick="setMode(5)">Wave</button>
+                <button class="mode-btn active" onclick="setMode(97)">Manual</button>
+                <button class="mode-btn" onclick="setMode(1)">Mode 1</button>
+                <button class="mode-btn" onclick="setMode(2)">Mode 2</button>
+                <button class="mode-btn" onclick="setMode(3)">Mode 3</button>
+                <button class="mode-btn" onclick="setMode(50)">Mode 50</button>
+                <button class="mode-btn" onclick="setMode(100)">Mode 100</button>
             </div>
         </div>
 
@@ -622,10 +622,11 @@
                     document.getElementById('offBtn').classList.remove('active');
                 }
                 
-                // Set mode to static (0) for manual color control
+                // For LEDnetWF, mode 97 appears to be manual/static color mode
+                // Set mode to 97 for manual color control (LEDnetWF protocol)
                 const modeButtons = document.querySelectorAll('.mode-btn');
                 if (!modeButtons[0].classList.contains('active')) {
-                    queueCommand(() => device.setMode(0), `setMode(0) - static mode for color control`);
+                    queueCommand(() => device.setMode(97), `setMode(97) - manual color mode for LEDnetWF`);
                     modeButtons.forEach((btn, index) => {
                         btn.classList.toggle('active', index === 0);
                     });
@@ -727,8 +728,10 @@
         // Mode selection
         window.setMode = function(mode) {
             const buttons = document.querySelectorAll('.mode-btn');
-            buttons.forEach((btn, index) => {
-                if (index === mode) {
+            buttons.forEach((btn) => {
+                // Check if this button's onclick matches the mode
+                const btnMode = btn.getAttribute('onclick').match(/\d+/);
+                if (btnMode && parseInt(btnMode[0]) === mode) {
                     btn.classList.add('active');
                 } else {
                     btn.classList.remove('active');
@@ -736,13 +739,20 @@
             });
             
             if (device && isConnected) {
-                device.setMode(mode);
-                logCommand(`setMode(${mode})`);
+                queueCommand(() => device.setMode(mode), `setMode(${mode})`);
             }
         }
 
         // Initialize color display
         updateColor(255, 0, 0);
+        
+        // Set initial mode to 97 (manual color mode for LEDnetWF)
+        window.addEventListener('load', function() {
+            const modeButtons = document.querySelectorAll('.mode-btn');
+            if (modeButtons.length > 0 && modeButtons[0]) {
+                modeButtons[0].classList.add('active');
+            }
+        });
     </script>
 </body>
 </html>
