@@ -3,369 +3,104 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>LED Strip Controller</title>
+    <title>White LED Strip Controller</title>
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
+        * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-            color: #333;
+            min-height: 100vh; padding: 20px; color: #333;
         }
-
         .container {
-            max-width: 600px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 20px;
-            padding: 25px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px; margin: 0 auto; background: white;
+            border-radius: 20px; padding: 25px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
         }
-
-        h1 {
-            text-align: center;
-            color: #667eea;
-            margin-bottom: 20px;
-            font-size: 24px;
-        }
-
+        h1 { text-align: center; color: #667eea; margin-bottom: 20px; font-size: 24px; }
         .status-section {
-            background: #f8f9fa;
-            border-radius: 12px;
-            padding: 15px;
-            margin-bottom: 25px;
-            border-left: 4px solid #667eea;
+            background: #f8f9fa; border-radius: 12px; padding: 15px;
+            margin-bottom: 25px; border-left: 4px solid #667eea;
         }
-
-        .status-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-
-        .status-row:last-child {
-            margin-bottom: 0;
-        }
-
-        .status-label {
-            font-weight: 600;
-            color: #666;
-            font-size: 14px;
-        }
-
-        .status-value {
-            font-size: 14px;
-            color: #333;
-            font-weight: 500;
-        }
-
+        .status-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .status-row:last-child { margin-bottom: 0; }
+        .status-label { font-weight: 600; color: #666; font-size: 14px; }
+        .status-value { font-size: 14px; color: #333; font-weight: 500; }
         .status-indicator {
-            display: inline-block;
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            margin-right: 8px;
+            display: inline-block; width: 10px; height: 10px;
+            border-radius: 50%; margin-right: 8px;
         }
-
-        .status-disconnected {
-            background: #dc3545;
-        }
-
-        .status-connected {
-            background: #28a745;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-
+        .status-disconnected { background: #dc3545; }
+        .status-connected { background: #28a745; animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
         .command-log {
-            background: #2d3748;
-            color: #00ff00;
-            font-family: 'Courier New', monospace;
-            font-size: 12px;
-            padding: 10px;
-            border-radius: 8px;
-            max-height: 80px;
-            overflow-y: auto;
-            margin-top: 10px;
-            word-break: break-all;
+            background: #2d3748; color: #00ff00; font-family: 'Courier New', monospace;
+            font-size: 12px; padding: 10px; border-radius: 8px;
+            max-height: 80px; overflow-y: auto; margin-top: 10px; word-break: break-all;
         }
-
         .connect-btn {
-            width: 100%;
-            padding: 15px;
-            background: #667eea;
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            margin-bottom: 25px;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            width: 100%; padding: 15px; background: #667eea; color: white; border: none;
+            border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer;
+            transition: all 0.3s; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
         }
-
-        .connect-btn:hover {
-            background: #5568d3;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
-        }
-
-        .connect-btn:active {
-            transform: translateY(0);
-        }
-
-        .connect-btn:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .control-section {
-            margin-bottom: 25px;
-            padding: 20px;
-            background: #f8f9fa;
-            border-radius: 12px;
-        }
-
+        .connect-btn:hover { background: #5568d3; transform: translateY(-2px); }
+        .control-section { margin-bottom: 25px; padding: 20px; background: #f8f9fa; border-radius: 12px; }
         .control-title {
-            font-size: 16px;
-            font-weight: 600;
-            color: #667eea;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
+            font-size: 16px; font-weight: 600; color: #667eea; margin-bottom: 15px;
+            display: flex; align-items: center;
         }
-
         .control-title::before {
-            content: '';
-            width: 4px;
-            height: 20px;
-            background: #667eea;
-            margin-right: 10px;
-            border-radius: 2px;
+            content: ''; width: 4px; height: 20px; background: #667eea;
+            margin-right: 10px; border-radius: 2px;
         }
-
-        .color-picker-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .color-wheel {
-            width: 200px;
-            height: 200px;
-            border-radius: 50%;
-            border: 3px solid #fff;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-            cursor: pointer;
-            position: relative;
-            background: conic-gradient(
-                red, yellow, lime, cyan, blue, magenta, red
-            );
-            margin-bottom: 15px;
-        }
-
-        .color-wheel::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 30px;
-            height: 30px;
-            background: white;
-            border: 3px solid #667eea;
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-        }
-
-        .color-display {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            border: 3px solid #fff;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-        }
-
-        .rgb-values {
-            display: flex;
-            justify-content: space-around;
-            margin-top: 15px;
-            text-align: center;
-        }
-
-        .rgb-value {
-            flex: 1;
-        }
-
-        .rgb-label {
-            font-size: 12px;
-            font-weight: 600;
-            margin-bottom: 5px;
-        }
-
-        .rgb-number {
-            font-size: 18px;
-            font-weight: 700;
-            color: #667eea;
-        }
-
-        .slider-container {
-            margin-bottom: 20px;
-        }
-
         .slider-label {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 10px;
-            font-size: 14px;
-            font-weight: 600;
-            color: #555;
+            display: flex; justify-content: space-between;
+            margin-bottom: 10px; font-size: 14px; font-weight: 600; color: #555;
         }
-
-        .slider-value {
-            color: #667eea;
-            font-weight: 700;
-        }
-
+        .slider-value { color: #667eea; font-weight: 700; }
         input[type="range"] {
-            width: 100%;
-            height: 8px;
-            border-radius: 5px;
-            background: #ddd;
-            outline: none;
-            -webkit-appearance: none;
+            width: 100%; height: 8px; border-radius: 5px;
+            background: #ddd; outline: none; -webkit-appearance: none;
         }
-
         input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            background: #667eea;
-            cursor: pointer;
-            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
-            transition: all 0.3s;
+            -webkit-appearance: none; width: 24px; height: 24px; border-radius: 50%;
+            background: #667eea; cursor: pointer; box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
         }
-
-        input[type="range"]::-webkit-slider-thumb:hover {
-            transform: scale(1.2);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.6);
-        }
-
         input[type="range"]::-moz-range-thumb {
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            background: #667eea;
-            cursor: pointer;
-            border: none;
-            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+            width: 24px; height: 24px; border-radius: 50%;
+            background: #667eea; cursor: pointer; border: none;
         }
-
         .temperature-gradient {
-            height: 8px;
-            border-radius: 5px;
-            background: linear-gradient(to right, 
-                #ffd1a8 0%,
-                #ffffff 50%,
-                #a8d8ff 100%
-            );
+            height: 8px; border-radius: 5px;
+            background: linear-gradient(to right, #ffd1a8 0%, #ffffff 50%, #a8d8ff 100%);
             margin-bottom: 10px;
         }
-
-        .kelvin-labels {
-            display: flex;
-            justify-content: space-between;
-            font-size: 11px;
-            color: #999;
-            margin-top: 5px;
+        .temperature-preview {
+            width: 100%; height: 80px; border-radius: 12px; margin-top: 15px;
+            border: 3px solid #fff; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.3s;
         }
-
-        .switch-container {
-            display: flex;
-            gap: 10px;
-        }
-
+        .switch-container { display: flex; gap: 10px; }
         .switch-btn {
-            flex: 1;
-            padding: 12px;
-            border: 2px solid #ddd;
-            background: white;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
+            flex: 1; padding: 12px; border: 2px solid #ddd; background: white;
+            border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.3s;
         }
-
-        .switch-btn.active {
-            background: #667eea;
-            color: white;
-            border-color: #667eea;
-        }
-
-        .mode-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-        }
-
+        .switch-btn.active { background: #667eea; color: white; border-color: #667eea; }
+        .mode-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
         .mode-btn {
-            padding: 12px;
-            border: 2px solid #ddd;
-            background: white;
-            border-radius: 8px;
-            font-size: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
+            padding: 12px; border: 2px solid #ddd; background: white; border-radius: 8px;
+            font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.3s;
         }
-
-        .mode-btn.active {
-            background: #667eea;
-            color: white;
-            border-color: #667eea;
+        .mode-btn.active { background: #667eea; color: white; border-color: #667eea; }
+        .device-info {
+            background: #e9ecef; padding: 10px; border-radius: 8px;
+            font-size: 12px; margin-top: 10px;
         }
-
-        @media (max-width: 480px) {
-            .container {
-                padding: 20px;
-            }
-
-            h1 {
-                font-size: 20px;
-            }
-
-            .color-wheel {
-                width: 180px;
-                height: 180px;
-            }
-
-            .mode-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
+        .info-note { font-size: 12px; color: #666; font-style: italic; margin-top: 10px; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>💡 LED Strip Controller</h1>
+        <h1>💡 White LED Strip Controller</h1>
 
-        <!-- Status Section -->
         <div class="status-section">
             <div class="status-row">
                 <span class="status-label">Connection:</span>
@@ -378,15 +113,15 @@
                 <span class="status-label">Device:</span>
                 <span class="status-value" id="deviceName">None</span>
             </div>
+            <div class="device-info" id="deviceInfo" style="display: none;">
+                <strong>Device Information:</strong><br>
+                <span id="deviceDetails">No device info available</span>
+            </div>
             <div class="command-log" id="commandLog">Ready to connect...</div>
         </div>
 
-        <!-- Connect Button -->
-        <button class="connect-btn" id="connectBtn" onclick="toggleConnection()">
-            Connect to LED Strip
-        </button>
+        <button class="connect-btn" id="connectBtn" onclick="toggleConnection()">Connect to LED Strip</button>
 
-        <!-- Power Switch -->
         <div class="control-section">
             <div class="control-title">Power</div>
             <div class="switch-container">
@@ -395,33 +130,44 @@
             </div>
         </div>
 
-        <!-- Brightness Control -->
         <div class="control-section">
             <div class="control-title">Brightness</div>
-            <div class="slider-container">
-                <div class="slider-label">
-                    <span>Brightness</span>
-                    <span class="slider-value"><span id="brightnessValue">100</span>%</span>
-                </div>
-                <input type="range" id="brightnessSlider" min="1" max="100" value="100">
+            <div class="slider-label">
+                <span>Brightness</span>
+                <span class="slider-value"><span id="brightnessValue">100</span>%</span>
+            </div>
+            <input type="range" id="brightnessSlider" min="1" max="100" value="100">
+        </div>
+
+        <div class="control-section">
+            <div class="control-title">Color Temperature (Warm/Cool White)</div>
+            <div class="temperature-gradient"></div>
+            <input type="range" id="temperatureSlider" min="0" max="100" value="50" step="1">
+            <div class="slider-label">
+                <span>Warm (2700K)</span>
+                <span class="slider-value"><span id="temperatureValue">4600</span>K</span>
+                <span>Cool (6500K)</span>
+            </div>
+            <div class="temperature-preview" id="temperaturePreview"></div>
+            <div class="info-note">
+                For manual temperature control, make sure device is in mode 97 (Manual). Animation modes may override temperature.
             </div>
         </div>
 
-        <!-- Mode Selection -->
         <div class="control-section">
             <div class="control-title">Light Mode</div>
             <div style="font-size: 12px; color: #666; margin-bottom: 10px;">
-                LEDnetWF has 113 modes (1-113). Use <strong>Manual (97)</strong> for color wheel/temp control. Experiment to find your favorites!
+                LEDnetWF has 113 modes. Use <strong>Manual (97)</strong> for temperature control.
             </div>
             <div class="mode-grid">
                 <button class="mode-btn active" onclick="setMode(97)">Manual</button>
                 <button class="mode-btn" onclick="setMode(38)">Fade</button>
-                <button class="mode-btn" onclick="setMode(1)">Jump RGB</button>
+                <button class="mode-btn" onclick="setMode(1)">Jump</button>
                 <button class="mode-btn" onclick="setMode(50)">Rainbow</button>
                 <button class="mode-btn" onclick="setMode(80)">Strobe</button>
                 <button class="mode-btn" onclick="setMode(100)">Wave</button>
             </div>
-            <div style="margin-top: 10px; display: flex; gap: 5px; align-items: center;">
+            <div style="margin-top: 10px; display: flex; gap: 5px;">
                 <input type="number" id="customMode" min="1" max="113" placeholder="1-113" 
                        style="flex: 1; padding: 8px; border: 2px solid #ddd; border-radius: 8px; font-size: 14px;">
                 <button onclick="setCustomMode()" 
@@ -431,69 +177,23 @@
             </div>
         </div>
 
-        <!-- Speed Control -->
         <div class="control-section">
             <div class="control-title">Animation Speed</div>
-            <div class="slider-container">
-                <div class="slider-label">
-                    <span>Speed</span>
-                    <span class="slider-value"><span id="speedValue">50</span>%</span>
-                </div>
-                <input type="range" id="speedSlider" min="0" max="100" value="50">
+            <div class="slider-label">
+                <span>Speed</span>
+                <span class="slider-value"><span id="speedValue">50</span>%</span>
             </div>
-        </div>
-
-        <!-- Color Temperature -->
-        <div class="control-section">
-            <div class="control-title">Color Temperature</div>
-            <div class="slider-container">
-                <div class="temperature-gradient"></div>
-                <input type="range" id="temperatureSlider" min="2700" max="6500" value="4000" step="100">
-                <div class="slider-label">
-                    <span>Warm</span>
-                    <span class="slider-value"><span id="temperatureValue">4000</span>K</span>
-                    <span>Cool</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Color Control -->
-        <div class="control-section">
-            <div class="control-title">Color Control</div>
-            <div class="color-picker-container">
-                <div class="color-wheel" id="colorWheel"></div>
-                <div class="color-display" id="colorDisplay"></div>
-                <div class="rgb-values">
-                    <div class="rgb-value">
-                        <div class="rgb-label" style="color: #ff0000;">R</div>
-                        <div class="rgb-number" id="redValue">255</div>
-                    </div>
-                    <div class="rgb-value">
-                        <div class="rgb-label" style="color: #00ff00;">G</div>
-                        <div class="rgb-number" id="greenValue">0</div>
-                    </div>
-                    <div class="rgb-value">
-                        <div class="rgb-label" style="color: #0000ff;">B</div>
-                        <div class="rgb-number" id="blueValue">0</div>
-                    </div>
-                </div>
-            </div>
+            <input type="range" id="speedSlider" min="0" max="100" value="50">
         </div>
     </div>
 
     <script type="module" src="./BluetoothLedStrip.js"></script>
-
     <script type="module">
         import { BluetoothLedStrip } from './BluetoothLedStrip.js';
 
-        let device = null;
-        let isConnected = false;
-        let currentRGB = { r: 255, g: 0, b: 0 };
-        let gattServer = null;
-        let commandQueue = [];
-        let isProcessingQueue = false;
+        let device = null, isConnected = false;
+        let commandQueue = [], isProcessingQueue = false;
 
-        // Queue commands with small delays to avoid overwhelming the device
         function queueCommand(commandFunc, logMessage) {
             commandQueue.push({ func: commandFunc, log: logMessage });
             processQueue();
@@ -501,14 +201,13 @@
 
         async function processQueue() {
             if (isProcessingQueue || commandQueue.length === 0) return;
-            
             isProcessingQueue = true;
             while (commandQueue.length > 0) {
                 const { func, log } = commandQueue.shift();
                 try {
                     func();
                     if (log) logCommand(log);
-                    await new Promise(resolve => setTimeout(resolve, 50)); // 50ms delay between commands
+                    await new Promise(resolve => setTimeout(resolve, 50));
                 } catch (error) {
                     logCommand(`Error: ${error}`);
                 }
@@ -516,14 +215,12 @@
             isProcessingQueue = false;
         }
 
-        // Logging function
         function logCommand(command) {
             const log = document.getElementById('commandLog');
             const timestamp = new Date().toLocaleTimeString();
             log.innerHTML = `[${timestamp}] ${command}<br>` + log.innerHTML;
         }
 
-        // Connection callbacks
         function onConnect(dev) {
             isConnected = true;
             document.getElementById('connectionStatus').textContent = 'Connected';
@@ -531,6 +228,16 @@
             document.getElementById('statusIndicator').className = 'status-indicator status-connected';
             document.getElementById('connectBtn').textContent = 'Disconnect';
             logCommand('Connected to device: ' + (dev.name || 'LED Strip'));
+            
+            const deviceInfo = document.getElementById('deviceInfo');
+            const deviceDetails = document.getElementById('deviceDetails');
+            deviceInfo.style.display = 'block';
+            
+            let details = `Name: ${dev.name || 'Unknown'}<br>`;
+            details += `ID: ${dev.id || 'Unknown'}<br>`;
+            if (dev.device && dev.device.id) details += `BLE ID: ${dev.device.id}<br>`;
+            
+            deviceDetails.innerHTML = details;
         }
 
         function onDisconnect(dev) {
@@ -540,6 +247,7 @@
             document.getElementById('deviceName').textContent = 'None';
             document.getElementById('statusIndicator').className = 'status-indicator status-disconnected';
             document.getElementById('connectBtn').textContent = 'Connect to LED Strip';
+            document.getElementById('deviceInfo').style.display = 'none';
             logCommand('Disconnected from device');
         }
 
@@ -548,7 +256,6 @@
             alert('Error: ' + exception);
         }
 
-        // Toggle connection
         window.toggleConnection = async function() {
             if (!isConnected) {
                 try {
@@ -559,7 +266,6 @@
                     onError(error);
                 }
             } else {
-                // Disconnect by accessing the underlying Bluetooth device
                 try {
                     if (device && device.device && device.device.gatt) {
                         device.device.gatt.disconnect();
@@ -568,88 +274,14 @@
                 } catch (error) {
                     logCommand('Disconnect error: ' + error);
                 }
-                // Force UI update
                 onDisconnect({ name: document.getElementById('deviceName').textContent });
             }
         }
 
-        // Color wheel interaction
-        const colorWheel = document.getElementById('colorWheel');
-        colorWheel.addEventListener('click', function(e) {
-            const rect = colorWheel.getBoundingClientRect();
-            const x = e.clientX - rect.left - rect.width / 2;
-            const y = e.clientY - rect.top - rect.height / 2;
-            const angle = Math.atan2(y, x);
-            const hue = (angle * 180 / Math.PI + 360) % 360;
-            
-            const rgb = hslToRgb(hue / 360, 1, 0.5);
-            updateColor(rgb.r, rgb.g, rgb.b);
-        });
-
-        // HSL to RGB conversion
-        function hslToRgb(h, s, l) {
-            let r, g, b;
-
-            if (s === 0) {
-                r = g = b = l;
-            } else {
-                const hue2rgb = (p, q, t) => {
-                    if (t < 0) t += 1;
-                    if (t > 1) t -= 1;
-                    if (t < 1/6) return p + (q - p) * 6 * t;
-                    if (t < 1/2) return q;
-                    if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
-                    return p;
-                };
-
-                const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
-                const p = 2 * l - q;
-                r = hue2rgb(p, q, h + 1/3);
-                g = hue2rgb(p, q, h);
-                b = hue2rgb(p, q, h - 1/3);
-            }
-
-            return {
-                r: Math.round(r * 255),
-                g: Math.round(g * 255),
-                b: Math.round(b * 255)
-            };
+        function percentToKelvin(percent) {
+            return Math.round(2700 + (percent / 100) * (6500 - 2700));
         }
 
-        // Update color display and send to device
-        function updateColor(r, g, b) {
-            currentRGB = { r, g, b };
-            document.getElementById('redValue').textContent = r;
-            document.getElementById('greenValue').textContent = g;
-            document.getElementById('blueValue').textContent = b;
-            document.getElementById('colorDisplay').style.background = `rgb(${r}, ${g}, ${b})`;
-            
-            if (device && isConnected) {
-                // Ensure power is on
-                const onBtn = document.getElementById('onBtn');
-                if (!onBtn.classList.contains('active')) {
-                    queueCommand(() => device.setSwitch(1), `setSwitch(1) - auto-on for color change`);
-                    onBtn.classList.add('active');
-                    document.getElementById('offBtn').classList.remove('active');
-                }
-                
-                // Just send RGB without changing mode - let user control mode manually
-                queueCommand(() => device.setRGB(r, g, b), `setRGB(${r}, ${g}, ${b})`);
-            }
-        }
-
-        // Color temperature control
-        const tempSlider = document.getElementById('temperatureSlider');
-        tempSlider.addEventListener('input', function() {
-            const kelvin = parseInt(this.value);
-            document.getElementById('temperatureValue').textContent = kelvin;
-            
-            // Convert Kelvin to RGB
-            const rgb = kelvinToRgb(kelvin);
-            updateColor(rgb.r, rgb.g, rgb.b);
-        });
-
-        // Kelvin to RGB conversion (simplified)
         function kelvinToRgb(kelvin) {
             const temp = kelvin / 100;
             let r, g, b;
@@ -679,36 +311,68 @@
             };
         }
 
-        // Brightness control
+        function updateTemperaturePreview(percent) {
+            const kelvin = percentToKelvin(percent);
+            document.getElementById('temperatureValue').textContent = kelvin;
+            
+            const rgb = kelvinToRgb(kelvin);
+            document.getElementById('temperaturePreview').style.backgroundColor = 
+                `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
+        }
+
+        const tempSlider = document.getElementById('temperatureSlider');
+        tempSlider.addEventListener('input', function() {
+            const percent = parseInt(this.value);
+            updateTemperaturePreview(percent);
+            
+            if (device && isConnected) {
+                const onBtn = document.getElementById('onBtn');
+                if (!onBtn.classList.contains('active')) {
+                    queueCommand(() => device.setSwitch(1), `setSwitch(1) - auto-on`);
+                    onBtn.classList.add('active');
+                    document.getElementById('offBtn').classList.remove('active');
+                }
+                
+                // Calculate warm/cool values (0-100 each)
+                const warm = 100 - percent;
+                const cool = percent;
+                
+                // Try to set white temperature - the library might have different methods
+                // Method 1: Try warm/cool channels if they exist
+                if (typeof device.setWarmWhite === 'function' && typeof device.setCoolWhite === 'function') {
+                    queueCommand(() => device.setWarmWhite(warm), `setWarmWhite(${warm})`);
+                    queueCommand(() => device.setCoolWhite(cool), `setCoolWhite(${cool})`);
+                } 
+                // Method 2: Try RGB as fallback
+                else {
+                    const kelvin = percentToKelvin(percent);
+                    const rgb = kelvinToRgb(kelvin);
+                    queueCommand(() => device.setRGB(rgb.r, rgb.g, rgb.b), `setRGB(${rgb.r},${rgb.g},${rgb.b}) temp:${kelvin}K`);
+                }
+            }
+        });
+
         const brightnessSlider = document.getElementById('brightnessSlider');
         brightnessSlider.addEventListener('input', function() {
             const value = parseInt(this.value);
             document.getElementById('brightnessValue').textContent = value;
             
             if (device && isConnected) {
-                // Ensure power is on when adjusting brightness
                 const onBtn = document.getElementById('onBtn');
-                if (!onBtn.classList.contains('active')) {
-                    setPower(1);
-                }
-                device.setBrightness(value);
-                logCommand(`setBrightness(${value})`);
+                if (!onBtn.classList.contains('active')) setPower(1);
+                queueCommand(() => device.setBrightness(value), `setBrightness(${value})`);
             }
         });
 
-        // Speed control
         const speedSlider = document.getElementById('speedSlider');
         speedSlider.addEventListener('input', function() {
             const value = parseInt(this.value);
             document.getElementById('speedValue').textContent = value;
-            
             if (device && isConnected) {
-                device.setSpeed(value);
-                logCommand(`setSpeed(${value})`);
+                queueCommand(() => device.setSpeed(value), `setSpeed(${value})`);
             }
         });
 
-        // Power switch
         window.setPower = function(state) {
             const offBtn = document.getElementById('offBtn');
             const onBtn = document.getElementById('onBtn');
@@ -722,16 +386,13 @@
             }
             
             if (device && isConnected) {
-                device.setSwitch(state);
-                logCommand(`setSwitch(${state})`);
+                queueCommand(() => device.setSwitch(state), `setSwitch(${state})`);
             }
         }
 
-        // Mode selection
         window.setMode = function(mode) {
             const buttons = document.querySelectorAll('.mode-btn');
             buttons.forEach((btn) => {
-                // Check if this button's onclick matches the mode
                 const btnMode = btn.getAttribute('onclick').match(/\d+/);
                 if (btnMode && parseInt(btnMode[0]) === mode) {
                     btn.classList.add('active');
@@ -745,7 +406,6 @@
             }
         }
 
-        // Custom mode tester
         window.setCustomMode = function() {
             const modeInput = document.getElementById('customMode');
             const mode = parseInt(modeInput.value);
@@ -758,16 +418,7 @@
             }
         }
 
-        // Initialize color display
-        updateColor(255, 0, 0);
-        
-        // Set initial mode to 97 (manual color mode for LEDnetWF)
-        window.addEventListener('load', function() {
-            const modeButtons = document.querySelectorAll('.mode-btn');
-            if (modeButtons.length > 0 && modeButtons[0]) {
-                modeButtons[0].classList.add('active');
-            }
-        });
+        updateTemperaturePreview(50);
     </script>
 </body>
 </html>
