@@ -178,6 +178,27 @@
         </div>
 
         <div class="control-section">
+            <div class="control-title">Diagnostics & Testing</div>
+            <div style="font-size: 12px; color: #666; margin-bottom: 10px;">
+                Use these tools to test different commands and see what works with your device.
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                <button onclick="testWhiteCommand()" 
+                        style="padding: 10px; background: #28a745; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                    Test White Warm
+                </button>
+                <button onclick="testWhiteCool()" 
+                        style="padding: 10px; background: #17a2b8; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                    Test White Cool
+                </button>
+            </div>
+            <button onclick="logDeviceMethods()" 
+                    style="width: 100%; padding: 10px; background: #ffc107; color: #333; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                Show Available Functions
+            </button>
+        </div>
+
+        <div class="control-section">
             <div class="control-title">Animation Speed</div>
             <div class="slider-label">
                 <span>Speed</span>
@@ -333,21 +354,28 @@
                     document.getElementById('offBtn').classList.remove('active');
                 }
                 
-                // Calculate warm/cool values (0-100 each)
-                const warm = 100 - percent;
-                const cool = percent;
+                // LEDnetWF protocol: white temperature is 0-100 (0x00-0x64)
+                // We need to send a raw BLE command since the library doesn't have this function
+                // Try multiple approaches
                 
-                // Try to set white temperature - the library might have different methods
-                // Method 1: Try warm/cool channels if they exist
-                if (typeof device.setWarmWhite === 'function' && typeof device.setCoolWhite === 'function') {
-                    queueCommand(() => device.setWarmWhite(warm), `setWarmWhite(${warm})`);
-                    queueCommand(() => device.setCoolWhite(cool), `setCoolWhite(${cool})`);
-                } 
-                // Method 2: Try RGB as fallback
-                else {
-                    const kelvin = percentToKelvin(percent);
-                    const rgb = kelvinToRgb(kelvin);
-                    queueCommand(() => device.setRGB(rgb.r, rgb.g, rgb.b), `setRGB(${rgb.r},${rgb.g},${rgb.b}) temp:${kelvin}K`);
+                // Approach 1: Try using setRGB with calculated temp colors
+                const kelvin = percentToKelvin(percent);
+                const rgb = kelvinToRgb(kelvin);
+                queueCommand(() => device.setRGB(rgb.r, rgb.g, rgb.b), `setRGB(${rgb.r},${rgb.g},${rgb.b}) for ${kelvin}K`);
+                
+                // Approach 2: Try sending raw BLE if we can access the characteristic
+                if (device.device && device.device.gatt && device.characteristic) {
+                    try {
+                        // LEDnetWF white command format (needs verification)
+                        // This is experimental - check the command log to see if it works
+                        const brightness = parseInt(document.getElementById('brightnessSlider').value);
+                        const whiteCmd = new Uint8Array([0x56, percent, brightness, 0xAA]);
+                        queueCommand(() => {
+                            device.characteristic.writeValue(whiteCmd);
+                        }, `RAW: setWhite(temp:${percent}, bright:${brightness})`);
+                    } catch (e) {
+                        logCommand(`Raw BLE write failed: ${e}`);
+                    }
                 }
             }
         });
@@ -415,6 +443,58 @@
                 logCommand(`Testing custom mode: ${mode}`);
             } else {
                 alert('Please enter a mode number between 1 and 113');
+            }
+        }
+
+        // Diagnostic functions
+        window.testWhiteCommand = function() {
+            if (!device || !isConnected) {
+                alert('Please connect to device first');
+                return;
+            }
+            
+            logCommand('=== Testing WARM white (temp=0) ===');
+            // Test RGB approach for warm white (2700K)
+            queueCommand(() => device.setRGB(255, 197, 143), 'setRGB(255,197,143) - warm white');
+        }
+
+        window.testWhiteCool = function() {
+            if (!device || !isConnected) {
+                alert('Please connect to device first');
+                return;
+            }
+            
+            logCommand('=== Testing COOL white (temp=100) ===');
+            // Test RGB approach for cool white (6500K)
+            queueCommand(() => device.setRGB(255, 250, 244), 'setRGB(255,250,244) - cool white');
+        }
+
+        window.logDeviceMethods = function() {
+            if (!device || !isConnected) {
+                alert('Please connect to device first');
+                return;
+            }
+            
+            logCommand('=== Device Object Analysis ===');
+            logCommand('Available methods on device:');
+            
+            for (let prop in device) {
+                if (typeof device[prop] === 'function') {
+                    logCommand(`  - device.${prop}()`);
+                }
+            }
+            
+            logCommand('Device properties:');
+            for (let prop in device) {
+                if (typeof device[prop] !== 'function') {
+                    logCommand(`  - device.${prop} = ${device[prop]}`);
+                }
+            }
+            
+            if (device.device) {
+                logCommand('Underlying BLE device available: YES');
+                logCommand(`  Device name: ${device.device.name}`);
+                logCommand(`  Device ID: ${device.device.id}`);
             }
         }
 
