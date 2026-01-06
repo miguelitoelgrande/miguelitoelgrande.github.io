@@ -98,7 +98,7 @@
             <div class="command-log" id="commandLog">Waiting for connection...</div>
         </div>
 
-        <button class="connect-btn" onclick="connect()">Connect to LED Strip</button>
+        <button class="connect-btn" id="connectBtn" onclick="connect()">Connect to LED Strip</button>
 
         <div class="control-section">
             <div class="control-title">Power</div>
@@ -183,14 +183,16 @@
             log.innerHTML = `[${time}] ${msg}<br>` + log.innerHTML;
         }
 
-        // Original callbacks - UNCHANGED
+        // Original callbacks - with button toggle
         function onConnect(dev) {
             document.getElementById('status').innerHTML = 'Device ' + dev.name + ' connected';
+            document.getElementById('connectBtn').textContent = 'Disconnect';
             logCommand('Connected to ' + dev.name);
         }
 
         function onDisconnect(dev) {
             document.getElementById('status').innerHTML = 'Device ' + dev.name + ' disconnected';
+            document.getElementById('connectBtn').textContent = 'Connect to LED Strip';
             logCommand('Disconnected');
         }
 
@@ -199,10 +201,17 @@
             logCommand('ERROR: ' + exception);
         }
 
-        // Original connect - UNCHANGED
+        // Connect/Disconnect toggle
         window.connect = function() {
-            device = new BluetoothLedStrip.Device();
-            device.connect(onConnect, onDisconnect, onError);
+            if (device && device.device && device.device.gatt && device.device.gatt.connected) {
+                // Disconnect
+                device.device.gatt.disconnect();
+                logCommand('Disconnect requested');
+            } else {
+                // Connect
+                device = new BluetoothLedStrip.Device();
+                device.connect(onConnect, onDisconnect, onError);
+            }
         }
 
         // Helper: Send white temperature packet
