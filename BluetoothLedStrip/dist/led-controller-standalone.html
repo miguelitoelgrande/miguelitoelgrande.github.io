@@ -183,6 +183,12 @@
         let bluetoothDevice = null;
         let gattServer = null;
         let characteristic = null;
+        
+        // LEDnetWF requires tracking these values and sending them together
+        let counter = 0;
+        let lastMode = 97;
+        let lastBrightness = 100;
+        let lastSpeed = 50;
 
         // ============================================
         // Logging
@@ -257,14 +263,6 @@
         // Protocol Helper Functions
         // ============================================
 
-        function calculateChecksum(packet) {
-            let sum = 0;
-            for (let i = 9; i < packet.length - 1; i++) {
-                sum += packet[i];
-            }
-            return sum & 0xFF;
-        }
-
         async function sendPacket(packet, description) {
             if (!characteristic) {
                 logCommand('ERROR: Not connected');
@@ -283,69 +281,90 @@
         // ============================================
         // LEDnetWF Protocol Commands
         // ============================================
-
+        
         async function sendWhiteTemperature(temperature, brightness) {
-            const packet = new Uint8Array([
-                0x00, 0x10, 0x80, 0x00, 0x00, 0x0d, 0x0e, 0x0b,
-                0x3b, 0xb1, 0x00, 0x00, 0x00,
+            counter++;
+            const magic = [0x0B, 0x3B];
+            const data = new Uint8Array([
+                0xB1, 0x00, 0x00, 0x00,
                 Math.round(temperature),
                 Math.round(brightness),
-                0x00, 0x00, 0x00, 0x00, 0x00,
-                0x00
-            ]);
-            packet[20] = calculateChecksum(packet);
-            return await sendPacket(packet, `White: temp=${temperature}, bright=${brightness}`);
-        }
-
-        async function sendRGB(r, g, b) {
-            const packet = new Uint8Array([
-                0x00, 0x05, 0x80, 0x00, 0x00, 0x0d, 0x0e, 0x0b,
-                0x3b, 0xa1, r, g, b, 0x00, 0x00, 0x00,
                 0x00, 0x00, 0x00, 0x00, 0x00
             ]);
-            packet[20] = calculateChecksum(packet);
-            return await sendPacket(packet, `RGB(${r},${g},${b})`);
+            const length = magic.length + data.length;
+            
+            const packet = new Uint8Array([
+                ((counter >> 8) & 0xFF),
+                (counter & 0xFF),
+                0x80, 0x00, 0x00,
+                length,
+                (length + 1),
+                ...magic,
+                ...data,
+                0x00  // checksum
+            ]);
+            
+            return await sendPacket(packet, `White: temp=${temperature}, bright=${brightness}`);
+        }
+        
+        // LEDnetWF sends mode, speed, and brightness together in one packet
+        async function sendModeSpeedBrightness() {
+            counter++;
+            const magic = [0x0B, 0x38];
+            const data = new Uint8Array([lastMode, lastSpeed, lastBrightness]);
+            const length = magic.length + data.length;
+            
+            const packet = new Uint8Array([
+                ((counter >> 8) & 0xFF),
+                (counter & 0xFF),
+                0x80, 0x00, 0x00,
+                length,
+                (length + 1),
+                ...magic,
+                ...data,
+                0x00  // checksum (not validated by device)
+            ]);
+            
+            return await sendPacket(packet, `Mode=${lastMode}, Speed=${lastSpeed}, Brightness=${lastBrightness}`);
         }
 
         async function sendBrightness(value) {
-            const packet = new Uint8Array([
-                0x00, 0x06, 0x80, 0x00, 0x00, 0x0d, 0x0e, 0x0b,
-                0x3b, 0x34, value, 0x00, 0x00, 0x00, 0x00, 0x00,
-                0x00, 0x00, 0x00, 0x00, 0x00
-            ]);
-            packet[20] = calculateChecksum(packet);
-            return await sendPacket(packet, `Brightness=${value}`);
-        }
-
-        async function sendSwitch(state) {
-            const isOn = state ? 0x23 : 0x24;
-            const packet = new Uint8Array([
-                0x00, state ? 0x04 : 0x5b, 0x80, 0x00, 0x00, 0x0d, 0x0e, 0x0b,
-                0x3b, isOn, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                0x00, 0x32, 0x00, 0x00, 0x00
-            ]);
-            packet[20] = calculateChecksum(packet);
-            return await sendPacket(packet, `Power ${state ? 'ON' : 'OFF'}`);
+            lastBrightness = value;
+            return await sendModeSpeedBrightness();
         }
 
         async function sendMode(mode) {
-            const packet = new Uint8Array([
-                0x00, 0x07, 0x80, 0x00, 0x00, 0x0d, 0x0e, 0x0b,
-                0x3b, 0x2c, mode, 0x00, 0x00, 0x00, 0x00, 0x00,
-                0x00, 0x00, 0x00, 0x00, 0x00
-            ]);
-            packet[20] = calculateChecksum(packet);
-            return await sendPacket(packet, `Mode=${mode}`);
+            lastMode = mode;
+            return await sendModeSpeedBrightness();
         }
 
         async function sendSpeed(speed) {
-            const packet = new Uint8Array([
-                0x00, 0x08, 0x80, 0x00, 0x00, 0x0d, 0x0e, 0x0b,
-                0x3b, 0x2b, speed, 0x00, 0x00, 0x00, 0x00, 0x00,
-                0x00, 0x00, 0x00, 0x00, 0x00
+            lastSpeed = speed;
+            return await sendModeSpeedBrightness();
+        }
+
+        async function sendSwitch(state) {
+            counter++;
+            const magic = [0x0B, 0x3B];
+            const data = new Uint8Array([
+                (state ? 0x23 : 0x24),
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x00
             ]);
-            packet[20] = calculateChecksum(packet);
-            return await sendPacket(packet, `Speed=${speed}`);
+            const length = magic.length + data.length;
+            
+            const packet = new Uint8Array([
+                ((counter >> 8) & 0xFF),
+                (counter & 0xFF),
+                0x80, 0x00, 0x00,
+                length,
+                (length + 1),
+                ...magic,
+                ...data,
+                0x00  // checksum
+            ]);
+            
+            return await sendPacket(packet, `Power ${state ? 'ON' : 'OFF'}`);
         }
 
         // ============================================
@@ -395,17 +414,22 @@
             await sendWhiteTemperature(parseInt(value), brightness);
         }
 
-        window.updateBrightness = function(value) {
+        window.updateBrightness = async function(value) {
             document.getElementById('brightnessValue').textContent = value;
-            sendBrightness(parseInt(value));
+            lastBrightness = parseInt(value);
+            
+            // For white LED strips, also update via white temperature packet
+            const tempSlider = document.getElementById('temperatureSlider');
+            const currentTemp = parseInt(tempSlider.value);
+            await sendWhiteTemperature(currentTemp, lastBrightness);
         }
 
-        window.updateSpeed = function(value) {
+        window.updateSpeed = async function(value) {
             document.getElementById('speedValue').textContent = value;
-            sendSpeed(parseInt(value));
+            await sendSpeed(parseInt(value));
         }
 
-        window.setSwitch = function(value) {
+        window.setSwitch = async function(value) {
             const offBtn = document.getElementById('offBtn');
             const onBtn = document.getElementById('onBtn');
             
@@ -417,16 +441,16 @@
                 offBtn.classList.remove('active');
             }
             
-            sendSwitch(value);
+            await sendSwitch(value);
         }
 
-        window.setModeBtn = function(mode) {
+        window.setModeBtn = async function(mode) {
             const buttons = document.querySelectorAll('.mode-btn');
             buttons.forEach(btn => {
                 const btnMode = btn.getAttribute('onclick').match(/\d+/);
                 btn.classList.toggle('active', btnMode && parseInt(btnMode[0]) === mode);
             });
-            sendMode(mode);
+            await sendMode(mode);
         }
 
         window.setCustomMode = function() {
