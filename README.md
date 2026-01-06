@@ -6,3 +6,10 @@ check it out: control your local LEDnetWF LED strip via Bluetooth: <br/>
  [./BluetoothLedStrip/dist/led-controller.html](./BluetoothLedStrip/dist/led-controller.html)
  
  
+# Inline Library versions:
+ 
+ [./BluetoothLedStrip/dist/led-controller-standalone.html](./BluetoothLedStrip/dist/led-controller-standalone.html)
+ 
+  <br/>
+ [./BluetoothLedStrip/dist/led-controller-standalone_diag.html](./BluetoothLedStrip/dist/led-controller-standalone_diag.html)
+ 
